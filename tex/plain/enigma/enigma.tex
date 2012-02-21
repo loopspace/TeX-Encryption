@@ -62,14 +62,14 @@
 
 %D \startsection[title=Encoding Macros]
 %D \startparagraph
-%D The environment of \texmacro{\startenigma} and \texmacro{\stopenigma}
-%D allow enabling of Enigma encoding in different parts of the document.
+%D The environment of \texmacro{\start<enigmaid>} and
+%D \texmacro{\stop<enigmaid>} allow enabling of Enigma encoding in
+%D different parts of the document.
 %D \stopparagraph
 
-\def\do_define_enigma#1{
+\def\do_define_enigma#1{%
   \@EA\gdef\csname start\enigmaid\endcsname{%
     \bgroup%
-    % \edef\currentenigmaid{\enigmaid}%
     \directlua{%
       if packagedata.enigma and packagedata.enigma.machines["#1"] then
         luatexbase.add_to_callback("pre_linebreak_filter",
@@ -80,8 +80,7 @@
         os.exit()
       end
     }%
-  }
-
+  }%
   \@EA\gdef\csname stop\enigmaid\endcsname{%
     \directlua{luatexbase.remove_from_callback("pre_linebreak_filter",
                                                "#1")

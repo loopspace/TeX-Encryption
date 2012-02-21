@@ -240,7 +240,7 @@ do
     else
       sn = colorize(n, 37)
     end
-    emit(1, s_steps .. name .. "”: " .. sn .. ".")
+    return s_steps .. name .. "”: " .. sn .. "."
   end
   local rotorstate = "[s \027[1;37m%s\027[0m n\027[1;37m%2d\027[0m]> "
   pprint_rotor = function (rotor)
@@ -259,23 +259,23 @@ do
         tmp[i] = chr
       end
     end
-    emit(3, stringformat(rotorstate,
-                         stringupper(value_to_letter[visible]),
-                         n)
-         .. tableconcat(tmp))
+    return stringformat(rotorstate,
+                        stringupper(value_to_letter[visible]),
+                        n)
+        .. tableconcat(tmp)
   end
 
   local rotor_scheme = underline"[rot not]"
                     .. "  "
                     .. underline(alpha_sorted)
   pprint_rotor_scheme = function ()
-    emit(3, rotor_scheme)
+    return rotor_scheme
   end
 
   local s_encoding_scheme = eol
                          .. [[in > 1 => 2 => 3 > UKW > 3 => 2 => 1]]
   pprint_encoding_scheme = function ()
-    emit(2, underline(s_encoding_scheme))
+    return underline(s_encoding_scheme)
   end
   local s_step     = " => "
   local stepcolor  = 36
@@ -288,17 +288,17 @@ do
     end
     result[nsteps+1] = colorize(value_to_letter[steps[nsteps]],
                                 finalcolor)
-    emit(2, tableconcat(result))
+    return tableconcat(result)
   end
 
-  local init_announcement = colorize([[Initial position of rotors: ]],
+  local init_announcement = colorize("\n" .. [[Initial position of rotors: ]],
                                      37)
   pprint_init = function (init)
     local result = ""
     result = value_to_letter[init[1]] .. " "
           .. value_to_letter[init[2]] .. " "
           .. value_to_letter[init[3]]
-    emit(1, init_announcement .. colorize(stringupper(result), 34))
+    return init_announcement .. colorize(stringupper(result), 34)
   end
 
   local machine_announcement =
@@ -308,7 +308,7 @@ do
   local s_ring = colorize("   Ring positions:", 37)
   local empty_plugboard = colorize(" ——", 34)
   pprint_new_machine = function (m)
-    local result = { eol }
+    local result = { "" }
     result[#result+1] = underline(machine_announcement)
     result[#result+1] = s_ukw
                      .. " "
@@ -334,26 +334,25 @@ do
       result[#result+1] = s_pb .. empty_plugboard
     end
     result[#result+1] = ""
-    emit(1, tableconcat(result, eol))
-    pprint_rotor_scheme()
+    result[#result+1] = pprint_rotor_scheme()
     for i=1, 3 do
       result[#result+1] = pprint_rotor(m.rotors[i])
     end
-    emit(1, "")
+    return tableconcat(result, eol) .. eol
   end
 
   local step_template  = colorize([[Step № ]], 37)
   local chr_template   = colorize([[  ——  Input ]], 37)
   local pbchr_template = colorize([[ → ]], 37)
   pprint_step = function (n, chr, pb_chr)
-    emit(2, eol
+    return eol
         .. step_template
         .. colorize(n, 34)
         .. chr_template
         .. colorize(stringupper(value_to_letter[chr]), 34)
         .. pbchr_template
         .. colorize(stringupper(value_to_letter[pb_chr]), 34)
-        .. eol)
+        .. eol
   end
 
   -- Split the strings into lines, group them in bunches of five etc.
@@ -383,14 +382,14 @@ do
       input  = stringupper(input)
       output = stringupper(output)
     end
-    emit(1, eol
+    return eol
         .. intext
         .. eol
         .. pprint_textblock(input)
         .. eol .. eol
         .. outtext
         .. eol
-        .. pprint_textblock(output))
+        .. pprint_textblock(output)
   end
 
 --[[ichd
@@ -400,9 +399,9 @@ setting exceeds the specified threshold, and only then pushes the
 output.
 \stopparagraph
 --ichd]]--
-  emit = function (v, str)
-    if str and v and verbose_level >= v then
-      iowrite(str .. eol)
+  emit = function (v, f, ...)
+    if f and v and verbose_level >= v then
+      iowrite(f(...) .. eol)
     end
     return 0
   end
@@ -606,8 +605,8 @@ something goes wrong.
     steps[5] = do_do_encode_char(steps[4], rc, false)
     steps[6] = do_do_encode_char(steps[5], rb, false)
     steps[7] = do_do_encode_char(steps[6], ra, false)
-    pprint_encoding_scheme()
-    pprint_encoding(steps)
+    emit(2, pprint_encoding_scheme)
+    emit(2, pprint_encoding, steps)
     return steps[7]
   end
 
@@ -643,11 +642,11 @@ local variable, \identifier{pb_char}.
     --end
     char = letter_to_value[char]
     local pb_char = pb[char]              -- first plugboard substitution
-    pprint_step(machine.step, char, pb_char)
-    pprint_rotor_scheme()
-    pprint_rotor(machine.rotors[1])
-    pprint_rotor(machine.rotors[2])
-    pprint_rotor(machine.rotors[3])
+    emit(2, pprint_step, machine.step, char, pb_char)
+    emit(3, pprint_rotor_scheme)
+    emit(3, pprint_rotor, machine.rotors[1])
+    emit(3, pprint_rotor, machine.rotors[2])
+    emit(3, pprint_rotor, machine.rotors[3])
     char = do_encode_char(machine.rotors,
                           machine.reflector,
                           pb_char)
@@ -685,19 +684,19 @@ extraction of successive characters from the sequence.
 \TODO{Make \luafunction{encode_string} preprocess characters.}
 \stopparagraph
 --ichd]]--
-  local encode_string = function (machine, str) --, pattern)
-    local init_state = pattern_to_state(pattern or get_random_pattern())
-    pprint_init(init_state)
-    machine:set_state(init_state)
-    local result = { }
-    str = stringlower(str)
-    local n = 1 -- OPTIONAL could lookup machine.step instead
-    for char in utfcharacters(str) do
-      result[n] = machine:encode_char(char)
-      n = n + 1
-    end
-    return tableconcat(result)
-  end
+  --local encode_string = function (machine, str) --, pattern)
+  --  local init_state = pattern_to_state(pattern or get_random_pattern())
+  --  emit(1, pprint_init, init_state)
+  --  machine:set_state(init_state)
+  --  local result = { }
+  --  str = stringlower(str)
+  --  local n = 1 -- OPTIONAL could lookup machine.step instead
+  --  for char in utfcharacters(str) do
+  --    result[n] = machine:encode_char(char)
+  --    n = n + 1
+  --  end
+  --  return tableconcat(result)
+  --end
 --[[ichd
 \stopsection
 --ichd]]--
@@ -959,7 +958,7 @@ consists of three elements:
   end
 
   local processed_chars = function (machine)
-    pprint_machine_step(machine.step, machine.name)
+    emit(1, pprint_machine_step, machine.step, machine.name)
   end
   new = function (setup_string, pattern)
     local raw_settings = lpegmatch(p_init, setup_string)
@@ -995,11 +994,11 @@ consists of three elements:
       --- </badcodingstyle>
     }
     local init_state = pattern_to_state(pattern or get_random_pattern())
-    pprint_init(init_state)
+    emit(1, pprint_init, init_state)
     machine:set_state(init_state)
 
     --table.print(machine.rotors)
-    pprint_new_machine(machine)
+    emit(1, pprint_new_machine, machine)
     return machine
   end
 end
@@ -1210,54 +1209,15 @@ end --stub
 \stopsection
 --ichd]]--
 ------------------------------------------------------------------------
---enigma.testit = function(args)
---  print""
---  print">>>>>>>>>>>>>>>>>>>>>>>>>>"
---  --for i,j in next, _G do print(i,j) end
---  print">>>>>>>>>>>>>>>>>>>>>>>>>>"
---  --print(table.print)
---end
-
 
 --local teststring = [[B I IV III 16 26 08 AD CN ET FL GI JV KZ PU QY WX]]
 --local teststring = [[B I II III 01 01 01 AD CN ET FL GI JV KZ PU QY WX]]
-local teststring = [[B I II III 01 01 01]]
+--local teststring = [[B I II III 01 01 01]]
 --local teststring = [[B I II III 01 01 02]]
 --local teststring = [[B I II III 02 02 02]]
 --local teststring = [[B I IV III 16 26 08 AD CN ET FL GI JV KZ PU QY WX]]
 --local teststring = [[B I IV III 16 26 08]]
 --local teststring = [[B I IV III 01 01 02]]
 
---local testtext = [[
---DASOB ERKOM MANDO DERWE HRMAQ TGIBT BEKAN NTXAA CHENX AACHE
---NXIST GERET TETXD URQGE BUEND ELTEN EINSA TZDER HILFS KRAEF
---TEKON NTEDI EBEDR OHUNG ABGEW ENDET UNDDI ERETT UNGDE RSTAD
---TGEGE NXEIN SXAQT XNULL XNULL XUHRS IQERG ESTEL LTWER DENX
---]]
---
---local testtext2 = [[
---XYOWN LJPQH SVDWC LYXZQ FXHIU VWDJO BJNZX RCWEO TVNJC IONTF
---QNSXW ISXKH JDAGD JVAKU KVMJA JHSZQ QJHZO IAVZO WMSCK ASRDN
---XKKSR FHCXC MPJGX YIJCC KISYY SHETX VVOVD QLZYT NJXNU WKZRX
---UJFXM BDIBR VMJKR HTCUJ QPTEE IYNYN JBEAQ JCLMU ODFWM ARQCF
---OBWN
---]]
-
---local ea = environment.argument
---local main = function ()
---  --local init_setting = { 1, 2, 3 }
---  local machine = new(teststring)
---
---  local plaintext  = ea"s"
---  --local plaintext   = testtext2
---  --local message_key = [[QWE EWG]]
---  --local ciphertext = machine:encode_string(plaintext, "rtz")
---  local ciphertext = machine:encode_string(plaintext, "aaa")
---  --local cyphertext = machine:encode_string(plaintext)
---  --local cyphertext = machine:decode_string(plaintext, message_key)
---  pprint_ciphertext(plaintext, ciphertext, true)
---end
-
---return main()
 
 -- vim:ft=lua:sw=2:ts=2:tw=72
