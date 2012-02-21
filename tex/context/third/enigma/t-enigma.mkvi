@@ -1,0 +1,105 @@
+%D \module
+%D   [     file=t-enigma,
+%D      version=2012-02-21 10:59:43+0100,
+%D        title=\CONTEXT\ User Module,
+%D     subtitle=Enigma,
+%D       author=Philipp Gesang,
+%D         date=\currentdate,
+%D    copyright=Philipp Gesang,
+%D      license=2-clause BSD,
+%D        email={gesang at stud dot uni-heidelberg dot de}]
+%D This module is licensed under the conditions of the BSD license with
+%D two clauses. There is a copy in a file named "COPYING" in the
+%D t-enigma source tree.
+
+\unprotect
+
+\writestatus{loading} {ConTeXt module / Enigma Document Encryption}
+
+\startinterface all
+  \setinterfacevariable {enigma} {enigma}
+\stopinterface
+
+\definenamespace [\v!enigma] [
+ \v!command=\v!no,
+    comment=Enigma Document Encryption,
+    \s!name=\v!enigma,
+  \s!parent=\v!enigma,
+      % setup=\v!list,
+      setup=\v!no,
+      style=\v!no,
+       type=module,
+    version=hg-tip,
+]
+
+%D Loading the \LUA\ conversion routines.
+
+\startluacode
+thirddata = thirddata or { }
+\stopluacode
+\registerctxluafile{enigma}
+
+%D \startsection[title=setups]
+%D The main setup. The \texmacro{defineenigma} macro does not adhere to
+%D the reommended practis of automatical macro derivation. Rather, we
+%D have our own parser do the job of setting globals. This is a
+%D consequence of the intention to offer the same behavior in any of the
+%D three main formats, \PLAIN, \CONTEXT and \LATEX. Hence, we don’t rely
+%D on the internal mechanisms but implement our own macro generator.
+
+\def\do_define_enigma#id{%
+  \expandafter\gdef\csname start\enigmaid\endcsname{%
+    \bgroup
+    \ctxlua{
+      if thirddata.enigma.machines["#id"] then
+        local callback = thirddata.enigma.callbacks["#id"],
+        nodes.tasks.enableaction("processors", "thirddata.enigma.callbacks.#id")
+      else
+        print([[ENIGMA: No machine of that name: #id!]])
+      end
+    }%
+  }%
+  %
+  \expandafter\gdef\csname stop\enigmaid\endcsname{%
+    \ctxlua{
+      nodes.tasks.disableaction("processors", "thirddata.enigma.callbacks.#id")
+      thirddata.enigma.machines["#id"]:processed_chars()
+    }%
+    \egroup%
+  }%
+}
+
+\def\defineenigma#id{%
+  \begingroup
+  \edef\enigmaid{#id}%
+  \expandafter\do_define_enigma\expandafter{\enigmaid}%
+  \endgroup%
+}
+
+%D \stopsection
+
+\def\do_setup_enigma#args{%
+    \ctxlua{
+      local enigma = thirddata.enigma
+      local current_args = enigma.parse_args([====[\detokenize{#args}]====])
+      enigma.new_callback(
+        enigma.new_machine(current_args,
+                           [====[\currentenigmaid]====]),
+        [====[\currentenigmaid]====])
+    }%
+  \popcatcodetable
+  \egroup%
+}
+
+%D The module setup \texmacro{setupenigma} expects key=value, notation.
+%D All the logic is at the Lua end, not much to see here …
+\def\setupenigma#id{%
+  \bgroup
+    \edef\currentenigmaid{#id}
+    \pushcatcodetable
+    \catcodetable \txtcatcodes
+    \do_setup_enigma%
+}
+
+\protect
+% vim:ft=context:sw=2:ts=2:tw=72
