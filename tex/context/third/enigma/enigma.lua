@@ -29,6 +29,7 @@ libraries.
 \stopparagraph
 --ichd]]--
 local iowrite           = io.write
+local mathfloor         = math.floor
 local mathrandom        = math.random
 local next              = next
 local nodecopy          = node.copy
@@ -228,17 +229,18 @@ do
     return stringformat("\027[4;37m%s\027[0m", s)
   end
 
-  local s_steps     = [[Total characters encoded: ]]
+  local s_steps     = [[Total characters encoded with machine “]]
   local f_warnsteps = [[ (%d over permitted maximum)]]
-  pprint_machine_step = function (n)
+  pprint_machine_step = function (n, name)
     local sn
+    name = colorize(name, 36)
     if n > max_msg_length then
       sn = colorize(n, 31) .. stringformat(f_warnsteps,
                                            n - max_msg_length)
     else
       sn = colorize(n, 37)
     end
-    emit(1, s_steps .. sn .. ".")
+    emit(1, s_steps .. name .. "”: " .. sn .. ".")
   end
   local rotorstate = "[s \027[1;37m%s\027[0m n\027[1;37m%2d\027[0m]> "
   pprint_rotor = function (rotor)
@@ -957,7 +959,7 @@ consists of three elements:
   end
 
   local processed_chars = function (machine)
-    pprint_machine_step(machine.step)
+    pprint_machine_step(machine.step, machine.name)
   end
   new = function (setup_string, pattern)
     local raw_settings = lpegmatch(p_init, setup_string)
@@ -1013,7 +1015,7 @@ Exported functionality will be collected in the table
 \stopparagraph
 --ichd]]--
 
-local enigma = { }
+local enigma = { machines = { }, callbacks = { } }
 
 --[[ichd
 \startparagraph
@@ -1122,16 +1124,33 @@ do
     if type(str) ~= "string" then return "" end
     return lpegmatch(p_ans, str)
   end
+  local ensure_int = function (n)
+    n = tonumber(n)
+    if not n then return 0 end
+    return mathfloor(n + 0.5)
+  end
+  p_alpha = Cs((alpha + (1 - alpha / ""))^1)
+  local ensure_alpha = function (s)
+    s = tostring(s)
+    return lpegmatch(p_alpha, s)
+  end
 
   local sanitizers = {
-    other_chars = toboolean,
-    day_key     = alphanum_or_space,
+    other_chars   = toboolean,
+    day_key       = alphanum_or_space,
+    rotor_setting = ensure_alpha,
+    verbose       = ensure_int,
   }
   enigma.parse_args = function (raw)
     local args = lpegmatch(p_args, raw)
     for k, v in next, args do
       local f = sanitizers[k]
-      args[k] = f(v)
+      if f then
+        args[k] = f(v)
+      else
+        -- OPTIONAL be fascist and permit only predefined args
+        args[k] = v
+      end
     end
     return args
   end
@@ -1148,9 +1167,9 @@ This is the interface to \TEX.
 \stopparagraph
 --ichd]]--
 
-enigma.new_callback = function (machine)
-  enigma.current_machine = machine
-  return function (head)
+enigma.new_callback = function (machine, name)
+  enigma.machines [name] = machine
+  enigma.callbacks[name] = function (head)
     for n in nodetraverse(head) do
       --print(node, node.id)
       if n.id == glyph_node then
@@ -1162,7 +1181,12 @@ enigma.new_callback = function (machine)
           local insertion = nodecopy(n)
           insertion.char = utf8byte(replacement)
           nodeinsert_before(head, n, insertion)
-          print(n.char, insertion.char)
+        elseif type(replacement) == "table" then
+          for i=1, #replacement do
+            local insertion = nodecopy(n)
+            insertion.char = utf8byte(replacement[i])
+            nodeinsert_before(head, n, insertion)
+          end
         end
         noderemove(head, n)
       elseif  n.id == glue_node  then
@@ -1175,8 +1199,10 @@ enigma.new_callback = function (machine)
 end
 
 --local teststring = [[B I II III 01 01 01]]
-enigma.new_machine = function (args, pattern)
-  local machine = new(args.day_key, pattern)
+enigma.new_machine = function (args, name)
+  local machine = new(args.day_key, args.rotor_setting)
+  machine.name  = name
+  verbose_level = args.verbose
   return machine
 end --stub
 

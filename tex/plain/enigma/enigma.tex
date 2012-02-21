@@ -1,4 +1,5 @@
 \input{luatexbase.sty}
+\catcode`\_=11 % There’s no reason why this shouldn’t be the case.
 %D \startsection[title=Prerequisites]
 %D \startparagraph
 %D Package loading and the namespacing issue are commented on in
@@ -42,15 +43,18 @@
     \directlua{
       local enigma = packagedata.enigma
       local current_args = enigma.parse_args([====[\detokenize{#1}]====])
-      enigma.current = enigma.new_callback(enigma.new_machine(current_args, "aaa"))
+      enigma.new_callback(enigma.new_machine(current_args,
+                                             [====[\currentenigmaid]====]),
+                          [====[\currentenigmaid]====])
     }%
   \egroup%
 }
 
 %D The module setup \texmacro{setupenigma} expects key=value, notation.
 %D All the logic is at the Lua end, not much to see here …
-\def\setupenigma{%
+\def\setupenigma#1{%
   \bgroup
+    \edef\currentenigmaid{#1}
     \luatexcatcodetable \enigmasetupcatcodes
     \do_setup_enigma%
 }
@@ -62,22 +66,38 @@
 %D allow enabling of Enigma encoding in different parts of the document.
 %D \stopparagraph
 
-\def\startenigma{%
-  \bgroup%
-  \directlua{%
-    if packagedata.enigma and packagedata.enigma.current then
-      luatexbase.add_to_callback("pre_linebreak_filter",
-                                 packagedata.enigma.current,
-                                 "enigma")
-    end
+\def\do_define_enigma#1{
+  \@EA\gdef\csname start\enigmaid\endcsname{%
+    \bgroup%
+    % \edef\currentenigmaid{\enigmaid}%
+    \directlua{%
+      if packagedata.enigma and packagedata.enigma.machines["#1"] then
+        luatexbase.add_to_callback("pre_linebreak_filter",
+                                   packagedata.enigma.callbacks["#1"],
+                                   "#1")
+      else
+        print([[ENIGMA: No machine of that name: #1!]])
+        os.exit()
+      end
+    }%
+  }
+
+  \@EA\gdef\csname stop\enigmaid\endcsname{%
+    \directlua{luatexbase.remove_from_callback("pre_linebreak_filter",
+                                               "#1")
+               packagedata.enigma.machines["#1"]:processed_chars()}%
+    \egroup%
   }%
 }
 
-\def\stopenigma{%
-  \directlua{luatexbase.remove_from_callback("pre_linebreak_filter", "enigma")
-             packagedata.enigma.current_machine:processed_chars()}%
-  \egroup%
+\def\defineenigma#1{%
+  \begingroup
+  \let\@EA\expandafter
+  \edef\enigmaid{#1}%
+  \@EA\do_define_enigma\@EA{\enigmaid}%
+  \endgroup%
 }
 %D \stopsection
 
+\catcode`\_=8
 % vim:ft=tex:sw=2:ts=2:expandtab:tw=72
