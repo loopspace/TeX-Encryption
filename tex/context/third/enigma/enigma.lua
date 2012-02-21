@@ -12,6 +12,44 @@
 
 --[[ichd--
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\startsection[title=Format Dependent Code]
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\startparagraph
+Exported functionality will be collected in the table
+\identifier{enigma}.
+\stopparagraph
+--ichd]]--
+
+local enigma = { machines = { }, callbacks = { } }
+local format_is_context_p = false
+
+--[[ichd
+\startparagraph
+Afaict, \LATEX\ for \LUATEX\ still lacks a globally accepted namespacing
+convention. This is more than bad, but we’ll have to cope with that. For
+this reason we brazenly introduce \identifier{packagedata} (in analogy
+to \CONTEXT’s \identifier{thirddata}) table as a package namespace
+proposal. If this module is called from a \LATEX\ or plain session, the
+table \identifier{packagedata} will already have been created so we will
+identify the format according to its presence or absence, respectively.
+\stopparagraph
+--ichd]]--
+
+if packagedata then             -- latex or plain
+  packagedata.enigma = enigma
+elseif thirddata then           -- context
+  format_is_context_p = true
+  thirddata.enigma = enigma
+else                            -- external call, mtx-script or whatever
+  _G.enigma = enigma
+end
+--[[ichd
+\stopsection
+--ichd]]--
+
+--[[ichd--
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startsection[title=Prerequisites]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
@@ -28,31 +66,34 @@ the
 libraries.
 \stopparagraph
 --ichd]]--
-local iowrite           = io.write
-local mathfloor         = math.floor
-local mathrandom        = math.random
-local next              = next
-local nodecopy          = node.copy
-local nodeid            = node.id
-local nodeinsert_before = node.insert_before
-local nodenew           = node.new
-local noderemove        = node.remove
-local nodetraverse      = node.traverse
-local stringfind        = string.find
-local stringformat      = string.format
-local stringlower       = string.lower
-local stringsub         = string.sub
-local stringupper       = string.upper
-local tableconcat       = table.concat
-local tonumber          = tonumber
-local utf8byte          = unicode.utf8.byte
-local utf8char          = unicode.utf8.char
-local utf8len           = unicode.utf8.len
-local utf8sub           = unicode.utf8.sub
-local utfcharacters     = string.utfcharacters
 
-local glyph_node        = nodeid"glyph"
-local glue_node         = nodeid"glue"
+local iowrite                      = io.write
+local mathfloor                    = math.floor
+local mathrandom                   = math.random
+local next                         = next
+local nodecopy                     = node.copy
+local nodeid                       = node.id
+local nodeinsert_before            = node.insert_before
+local nodenew                      = node.new
+local noderemove                   = node.remove
+local nodetraverse                 = node.traverse
+local nodesinstallattributehandler = format_is_context_p and nodes.installattributehandler
+local nodestasksappendaction       = format_is_context_p and nodes.tasks.appendaction
+local stringfind                   = string.find
+local stringformat                 = string.format
+local stringlower                  = string.lower
+local stringsub                    = string.sub
+local stringupper                  = string.upper
+local tableconcat                  = table.concat
+local tonumber                     = tonumber
+local utf8byte                     = unicode.utf8.byte
+local utf8char                     = unicode.utf8.char
+local utf8len                      = unicode.utf8.len
+local utf8sub                      = unicode.utf8.sub
+local utfcharacters                = string.utfcharacters
+
+local glyph_node                   = nodeid"glyph"
+local glue_node                    = nodeid"glue"
 
 --[[ichd
 \startparagraph
@@ -436,9 +477,9 @@ The latter is an essential prerequisite for double-stepping.
 
 --[[ichd--
 \startparagraph
-The \luafunction{rotate} function takes care of rotor ({\em Walze})
+The \luafunction{rotate} function takes care of rotor (\emph{Walze})
 movement. This entails incrementing the next rotor whenever the notch
-has been reached and covers the corner case {\em double stepping}.
+has been reached and covers the corner case \emph{double stepping}.
 \stopparagraph
 --ichd]]--
   local rotate = function (machine)
@@ -624,7 +665,7 @@ some pretty printer hooks reside here.
 
 \startparagraph
 \luafunction{encode_char} contributes only one element of the encoding
-procedure: the plugboard ({\em Steckerbrett}).
+procedure: the plugboard (\emph{Steckerbrett}).
 Like the rotors described above, a character passed through this
 device twice; the plugboard marks the beginning and end of every step.
 For debugging purposes, the first substitution is stored in a separate
@@ -1002,42 +1043,10 @@ consists of three elements:
     return machine
   end
 end
-
---[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Format Dependent Code]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\startparagraph
-Exported functionality will be collected in the table
-\identifier{enigma}.
-\stopparagraph
---ichd]]--
-
-local enigma = { machines = { }, callbacks = { } }
-
---[[ichd
-\startparagraph
-Afaict, \LATEX\ for \LUATEX\ still lacks a globally accepted namespacing
-convention. This is more than bad, but we’ll have to cope with that. For
-this reason we brazenly introduce \identifier{packagedata} (in analogy
-to \CONTEXT’s \identifier{thirddata}) table as a package namespace
-proposal. If this module is called from a \LATEX\ or plain session, the
-table \identifier{packagedata} will already have been created so we will
-identify the format according to its presence or absence, respectively.
-\stopparagraph
---ichd]]--
-
-if packagedata then             -- latex or plain
-  packagedata.enigma = enigma
-elseif thirddata then           -- context
-  packagedata.enigma = enigma
-else                            -- external call, mtx-script or whatever
-  _G.enigma = enigma
-end
 --[[ichd
 \stopsection
 --ichd]]--
+
 
 --[[ichd--
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1162,13 +1171,28 @@ end
 --[[ichd
 \startsection[title=Callback]
 \startparagraph
-This is the interface to \TEX.
+This is the interface to \TEX. We generate a new callback handler for
+each defined Enigma machine. \CONTEXT\ delivers the head as third
+argument of a callback only (...‽), so we’ll have to do some variable
+shuffling on the function side.
+\stopparagraph
+
+\startparagraph
+\useURL[khaled_hosny_texsx] [http://tex.stackexchange.com/a/11970]
+       []                   [tex.sx]
+Registering a callback (“node attribute”?, “node task”?, “task action”?)
+in \CONTEXT\ is not straightforward, let alone documented. The trick is
+to create, install and register a handler first in order to use it later
+on \dots\ many thanks to Khaled Hosny, who posted an answer to
+\from[khaled_hosny_texsx].
 \stopparagraph
 --ichd]]--
 
 enigma.new_callback = function (machine, name)
   enigma.machines [name] = machine
-  enigma.callbacks[name] = function (head)
+  local format_is_context_p = format_is_context_p
+  local cbk = function (a, _, c)
+    local head = format_is_context_p and c or a
     for n in nodetraverse(head) do
       --print(node, node.id)
       if n.id == glyph_node then
@@ -1193,7 +1217,21 @@ enigma.new_callback = function (machine, name)
         noderemove(head, n)
       end
     end
+    --if context then return head, true end
     return head
+  end
+  if format_is_context_p then
+    local cbk_id = "enigma_" .. name
+    enigma.callbacks[name] = nodesinstallattributehandler{
+      name      = cbk_id,
+      namespace = thirddata.enigma,
+      processor = cbk,
+    }
+    nodestasksappendaction("processors",
+                           "characters",
+                           "thirddata.enigma.callbacks." .. name)
+  else
+    enigma.callbacks[name] = cbk
   end
 end
 
