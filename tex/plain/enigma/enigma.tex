@@ -1,0 +1,83 @@
+\input{luatexbase.sty}
+%D \startsection[title=Prerequisites]
+%D \startparagraph
+%D Package loading and the namespacing issue are commented on in
+%D \identifier{enigma.lua}.
+%D \stopparagraph
+\directlua{%
+  packagedata = packagedata or { }
+  dofile(kpse.find_file"enigma.lua")
+}
+
+%D \startparagraph
+%D First, create somthing like \CONTEXT’s asciimode. We found
+%D \texmacro{\newluatexcatcodetable} in \identifier{luacode.sty} and it
+%D seems to get the job done.
+%D \stopparagraph
+\newluatexcatcodetable \enigmasetupcatcodes
+\bgroup
+  \def\escapecatcode      {0}
+  \def\begingroupcatcode  {1}
+  \def\endgroupcatcode    {2}
+  \def\spacecatcode      {10}
+  \def\lettercatcode     {11}
+  \setluatexcatcodetable\enigmasetupcatcodes {
+      \catcode`\^^I = \spacecatcode % tab
+      \catcode`\    = \spacecatcode
+      \catcode`\{   = \begingroupcatcode
+      \catcode`\}   = \endgroupcatcode
+      \catcode`\^^L = \lettercatcode    % form feed
+      \catcode`\^^M = \lettercatcode    % eol
+  }
+\egroup
+%D \stopsection
+
+%D \startsection[title=Setups]
+%D \startparagraph
+%D Once the proper catcodes are in place, the setup macro
+%D \texmacro{do-setup_enigma} doesn’t to anything besides passing stuff
+%D through to Lua.
+%D \stoppparagraph
+\def\do_setup_enigma#1{%
+    \directlua{
+      local enigma = packagedata.enigma
+      local current_args = enigma.parse_args([====[\detokenize{#1}]====])
+      enigma.current = enigma.new_callback(enigma.new_machine(current_args, "aaa"))
+    }%
+  \egroup%
+}
+
+%D The module setup \texmacro{setupenigma} expects key=value, notation.
+%D All the logic is at the Lua end, not much to see here …
+\def\setupenigma{%
+  \bgroup
+    \luatexcatcodetable \enigmasetupcatcodes
+    \do_setup_enigma%
+}
+%D \stopsection
+
+%D \startsection[title=Encoding Macros]
+%D \startparagraph
+%D The environment of \texmacro{\startenigma} and \texmacro{\stopenigma}
+%D allow enabling of Enigma encoding in different parts of the document.
+%D \stopparagraph
+
+\def\startenigma{%
+  \bgroup%
+  \directlua{%
+    if packagedata.enigma and packagedata.enigma.current then
+      luatexbase.add_to_callback("pre_linebreak_filter",
+                                 packagedata.enigma.current,
+                                 "enigma")
+    end
+  }%
+}
+
+\def\stopenigma{%
+  \directlua{luatexbase.remove_from_callback("pre_linebreak_filter", "enigma")
+             packagedata.enigma.current_machine:processed_chars()}%
+  \egroup%
+}
+%D \stopsection
+
+% vim:ft=tex:sw=2:ts=2:expandtab:tw=72
