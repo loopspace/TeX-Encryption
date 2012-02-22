@@ -39,13 +39,15 @@ thirddata = thirddata or { }
 \stopluacode
 \registerctxluafile{enigma}
 
-%D \startsection[title=setups]
+%D \startdocsection[title=setups]
+%D \startparagraph
 %D The main setup. The \texmacro{defineenigma} macro does not adhere to
 %D the reommended practis of automatical macro derivation. Rather, we
 %D have our own parser do the job of setting globals. This is a
 %D consequence of the intention to offer the same behavior in any of the
 %D three main formats, \PLAIN, \CONTEXT and \LATEX. Hence, we don’t rely
 %D on the internal mechanisms but implement our own macro generator.
+%D \stopparagraph
 
 \def\do_define_enigma#id{%
   \expandafter\gdef\csname start\enigmaid\endcsname{%
@@ -76,8 +78,9 @@ thirddata = thirddata or { }
   \endgroup%
 }
 
-%D \stopsection
+%D \stopdocsection
 
+%D \startdocsection[title=Setup]
 \def\do_setup_enigma#args{%
     \ctxlua{
       local enigma = thirddata.enigma
@@ -91,8 +94,11 @@ thirddata = thirddata or { }
   \egroup%
 }
 
+%D \startparagraph
 %D The module setup \texmacro{setupenigma} expects key=value, notation.
 %D All the logic is at the Lua end, not much to see here …
+%D \stopparagraph
+
 \def\setupenigma#id{%
   \bgroup
     \edef\currentenigmaid{#id}
@@ -100,6 +106,8 @@ thirddata = thirddata or { }
     \catcodetable \txtcatcodes
     \do_setup_enigma%
 }
+
+%D \stopdocsection
 
 \protect
 % vim:ft=context:sw=2:ts=2:tw=72

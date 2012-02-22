@@ -12,7 +12,7 @@
 
 --[[ichd--
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Format Dependent Code]
+\startdocsection[title=Format Dependent Code]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \startparagraph
@@ -45,12 +45,12 @@ else                            -- external call, mtx-script or whatever
   _G.enigma = enigma
 end
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 --[[ichd--
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Prerequisites]
+\startdocsection[title=Prerequisites]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
 First of all, we generate local copies of all those library functions
@@ -132,13 +132,13 @@ limit has been exceeded during the \TEX\ run.
 --ichd]]--
 local max_msg_length = 250
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 
 --[[ichd--
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Globals]
+\startdocsection[title=Globals]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
 The following mappings are used all over the place as we convert back
@@ -232,12 +232,12 @@ mnemonic.
 end
 
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 --[[ichd
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Pretty printing for debug purposes]
+\startdocsection[title=Pretty printing for debug purposes]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
 The functions below allow for formatting of the terminal output; they
@@ -451,12 +451,12 @@ end
 local new
 do
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 --[[ichd
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Rotation]
+\startdocsection[title=Rotation]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
 The following function \luafunction{do_rotate} increments the rotational
@@ -502,12 +502,12 @@ has been reached and covers the corner case \emph{double stepping}.
     machine.rotors = { rc, rb, ra }
   end
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 --[[ichd
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Input Preprocessing]
+\startdocsection[title=Input Preprocessing]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
 Internally, we will use lowercase strings as they are a lot more
@@ -575,12 +575,12 @@ ten.
   }
 
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 --[[ichd
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[
+\startdocsection[
   title={Main function chain to be applied to single characters},
 ]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -739,12 +739,12 @@ extraction of successive characters from the sequence.
   --  return tableconcat(result)
   --end
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 --[[ichd--
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Initialization string parser]
+\startdocsection[title=Initialization string parser]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \placetable[here][]{Initialization strings}{%
@@ -842,12 +842,12 @@ extraction of successive characters from the sequence.
 
 
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 --[[ichd--
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Initialization routines]
+\startdocsection[title=Initialization routines]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \startparagraph
@@ -961,12 +961,13 @@ consists of three elements:
   local encode_general = function (machine, chr)
     local replacement = pp_substitutions[chr] or valid_char_p[chr] and chr
     if not replacement then return false end
+
     if utf8len(replacement) == 1 then
-      return encode_char(machine, chr)
+      return encode_char(machine, replacement)
     end
     local result = { }
-    for chr in next, utfcharacters(replacement) do
-      result[#result+1] = encode_char(machine, chr)
+    for new_chr in utfcharacters(replacement) do
+      result[#result+1] = encode_char(machine, new_chr)
     end
     return result
   end
@@ -1044,13 +1045,13 @@ consists of three elements:
   end
 end
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 
 --[[ichd--
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\startsection[title=Setup Argument Handling]
+\startdocsection[title=Setup Argument Handling]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \startparagraph
@@ -1165,11 +1166,11 @@ do
 end
 
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 
 --[[ichd
-\startsection[title=Callback]
+\startdocsection[title=Callback]
 \startparagraph
 This is the interface to \TEX. We generate a new callback handler for
 each defined Enigma machine. \CONTEXT\ delivers the head as third
@@ -1244,7 +1245,7 @@ enigma.new_machine = function (args, name)
 end --stub
 
 --[[ichd
-\stopsection
+\stopdocsection
 --ichd]]--
 ------------------------------------------------------------------------
 

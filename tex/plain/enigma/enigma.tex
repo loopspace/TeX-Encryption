@@ -1,6 +1,6 @@
 \input{luatexbase.sty}
 \catcode`\_=11 % There’s no reason why this shouldn’t be the case.
-%D \startsection[title=Prerequisites]
+%D \startdocsection[title=Prerequisites]
 %D \startparagraph
 %D Package loading and the namespacing issue are commented on in
 %D \identifier{enigma.lua}.
@@ -31,9 +31,9 @@
       \catcode`\^^M = \lettercatcode    % eol
   }
 \egroup
-%D \stopsection
+%D \stopdocsection
 
-%D \startsection[title=Setups]
+%D \startdocsection[title=Setups]
 %D \startparagraph
 %D Once the proper catcodes are in place, the setup macro
 %D \texmacro{do-setup_enigma} doesn’t to anything besides passing stuff
@@ -58,9 +58,9 @@
     \luatexcatcodetable \enigmasetupcatcodes
     \do_setup_enigma%
 }
-%D \stopsection
+%D \stopdocsection
 
-%D \startsection[title=Encoding Macros]
+%D \startdocsection[title=Encoding Macros]
 %D \startparagraph
 %D The environment of \texmacro{\start<enigmaid>} and
 %D \texmacro{\stop<enigmaid>} allow enabling of Enigma encoding in
@@ -97,7 +97,7 @@
   \@EA\do_define_enigma\@EA{\enigmaid}%
   \endgroup%
 }
-%D \stopsection
+%D \stopdocsection
 
 \catcode`\_=8
 % vim:ft=tex:sw=2:ts=2:expandtab:tw=72
