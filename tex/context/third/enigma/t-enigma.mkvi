@@ -8,9 +8,9 @@
 %D    copyright=Philipp Gesang,
 %D      license=2-clause BSD,
 %D        email={gesang at stud dot uni-heidelberg dot de}]
-%D This module is licensed under the conditions of the BSD license with
-%D two clauses. There is a copy in a file named "COPYING" in the
-%D t-enigma source tree.
+%C This module is licensed under the conditions of the BSD license with
+%C two clauses. There is a copy in a file named "COPYING" in the
+%C t-enigma source tree.
 
 \unprotect
 
@@ -55,7 +55,8 @@ thirddata = thirddata or { }
     \ctxlua{
       if thirddata.enigma.machines["#id"] then
         local callback = thirddata.enigma.callbacks["#id"],
-        nodes.tasks.enableaction("processors", "thirddata.enigma.callbacks.#id")
+        nodes.tasks.enableaction("processors",
+                                 "thirddata.enigma.callbacks.#id")
       else
         print([[ENIGMA: No machine of that name: #id!]])
       end
@@ -64,7 +65,8 @@ thirddata = thirddata or { }
   %
   \expandafter\gdef\csname stop\enigmaid\endcsname{%
     \ctxlua{
-      nodes.tasks.disableaction("processors", "thirddata.enigma.callbacks.#id")
+      nodes.tasks.disableaction("processors",
+                                "thirddata.enigma.callbacks.#id")
       thirddata.enigma.machines["#id"]:processed_chars()
     }%
     \egroup%
@@ -84,7 +86,8 @@ thirddata = thirddata or { }
 \def\do_setup_enigma#args{%
     \ctxlua{
       local enigma = thirddata.enigma
-      local current_args = enigma.parse_args([====[\detokenize{#args}]====])
+      local current_args =
+        enigma.parse_args([====[\detokenize{#args}]====])
       enigma.new_callback(
         enigma.new_machine(current_args,
                            [====[\currentenigmaid]====]),

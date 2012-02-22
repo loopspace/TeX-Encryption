@@ -201,11 +201,11 @@ mnemonic.
 --[[ichd--
 \placetable[here][]{The three reflectors and their substitution
                     rules.}{%
-  \starttabular[|r|l|]
+  \starttabulate[|r|l|]
     \NC UKW a \NC AE BJ CM DZ FL GY HX IV KW NR OQ PU ST \NC \NR
     \NC UKW b \NC AY BR CU DH EQ FS GL IP JX KN MO TZ VW \NC \NR
     \NC UKW c \NC AF BV CP DJ EI GO HY KR LZ MX NW QT SU \NC \NR
-  \stoptabular
+  \stoptabulate
 }
 --ichd]]--
 

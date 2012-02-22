@@ -12,7 +12,7 @@
 
 %D \startparagraph
 %D First, create somthing like \CONTEXT’s asciimode. We found
-%D \texmacro{\newluatexcatcodetable} in \identifier{luacode.sty} and it
+%D \texmacro{newluatexcatcodetable} in \identifier{luacode.sty} and it
 %D seems to get the job done.
 %D \stopparagraph
 \newluatexcatcodetable \enigmasetupcatcodes
@@ -38,7 +38,7 @@
 %D Once the proper catcodes are in place, the setup macro
 %D \texmacro{do-setup_enigma} doesn’t to anything besides passing stuff
 %D through to Lua.
-%D \stoppparagraph
+%D \stopparagraph
 \def\do_setup_enigma#1{%
     \directlua{
       local enigma = packagedata.enigma
@@ -62,8 +62,8 @@
 
 %D \startdocsection[title=Encoding Macros]
 %D \startparagraph
-%D The environment of \texmacro{\start<enigmaid>} and
-%D \texmacro{\stop<enigmaid>} allow enabling of Enigma encoding in
+%D The environment of \texmacro{start<enigmaid>} and
+%D \texmacro{stop<enigmaid>} allow enabling of Enigma encoding in
 %D different parts of the document.
 %D \stopparagraph
 
