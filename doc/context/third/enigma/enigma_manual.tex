@@ -1,0 +1,50 @@
+\startdocchapter[title=Example: Encrypted Document]
+
+Encrypt the text of your document using the script interface. For
+a start try out the settings as given in below listing.
+
+\starttyping
+mtxrun --script mtx-t-enigma                    \
+       --setup="other_chars = ok,               \
+                day_key = B I II III 01 01 01,  \
+                rotor_setting = xyz,            \
+                verbose=0"                      \
+       --text="Nobody can read this."
+\stoptyping
+
+This will result in the thoroughly scrambled string
+\type{zdkbxwwnwkazpokvgr}.
+Then, use the same settings you encrypted the text with in your
+document.
+
+\startcontexttyping
+\usemodule[enigma]
+\defineenigma [secretmessage]
+\setupenigma  [secretmessage] [
+  other_chars = ok,
+  day_key = B I II III 01 01 01,
+  rotor_setting = xyz,
+  verbose=3,
+]
+
+\starttext
+
+\startsecretmessage
+zdkbxwwnwkazpokvgr
+\stopsecretmessage
+
+\stoptext
+\stopcontexttyping
+
+If you compile this document with \CONTEXT, the plain text will
+reappear.
+Notice that punctuation is substituted with the letter “x” before
+encryption and that spaces are omitted.
+
+\stopdocchapter
+
+\startdocchapter[title=Acknowledgements]
+The Enigma module was inspired by Arno Trautmann’s
+\identifier{chickenize} package.
+Without \LUATEX, encryption on node-level would not have been possible.
+\stopdocchapter

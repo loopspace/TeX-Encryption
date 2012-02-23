@@ -452,9 +452,9 @@ do
 
 --[[ichd--
 \startparagraph
-Main stdout verbosity wrapper function. Checks if the global verbosity
-setting exceeds the specified threshold, and only then pushes the
-output.
+\luafunction{emit} is the main wrapper function for \identifier{stdout}.
+Checks if the global verbosity setting exceeds the specified threshold,
+and only then pushes the output.
 \stopparagraph
 --ichd]]--
   emit = function (v, f, ...)
@@ -770,14 +770,16 @@ extraction of successive characters from the sequence.
 \placetable[here][]{Initialization strings}{%
   \bTABLE
     \bTR
-      \bTD       Reflector \eTD
-      \bTD[nc=3] Rotor     \eTD
-      \bTD   Initial rotor \eTD
-      \bTD Plugboard wiring \eTD
+      \bTD        Reflector     \eTD
+      \bTD[nc=3]  Rotor         \eTD
+      \bTD[nc=3]  Initial       \eTD
+      \bTD[nc=10] Plugboard wiring    \eTD
     \eTR
     \eTR
     \bTR
-      \bTD in slot   \eTD \bTD[nc=3] setting \eTD
+      \bTD in slot       \eTD
+      \bTD[nc=3] setting \eTD
+      \bTD[nc=3] rotor   \eTD
     \eTR
     \bTR
       \bTD \eTD

@@ -1,6 +1,8 @@
  Documentation Specification for the Enigma Module.
+ setup   extra_setups.tex
 [Manual]
  to be written
+doc     enigma_manual.tex
 [Implementation]
 \PLAIN\_macros      tex     enigma.tex
 \CONTEXT\_macros    context t-enigma.mkvi
