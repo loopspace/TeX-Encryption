@@ -92,6 +92,23 @@ local utf8len                      = unicode.utf8.len
 local utf8sub                      = unicode.utf8.sub
 local utfcharacters                = string.utfcharacters
 
+local tablecopy
+if format_is_context_p then
+  tablecopy = table.copy
+else
+  tablecopy = function (t) -- ignores tables as keys
+    local result = { }
+    for k, v in next, t do
+      if type(v) == table then
+        result[k] = tablecopy(v)
+      else
+        result[k] = v
+      end
+    end
+    return result
+  end
+end
+
 local glyph_node                   = nodeid"glyph"
 local glue_node                    = nodeid"glue"
 
@@ -1189,10 +1206,11 @@ on \dots\ many thanks to Khaled Hosny, who posted an answer to
 \stopparagraph
 --ichd]]--
 
-enigma.new_callback = function (machine, name)
+local new_callback = function (machine, name)
   enigma.machines [name] = machine
   local format_is_context_p = format_is_context_p
   local cbk = function (a, _, c)
+    print(name, "<<<<<<<<<<<<<<<<<<<")
     local head = format_is_context_p and c or a
     for n in nodetraverse(head) do
       --print(node, node.id)
@@ -1218,7 +1236,6 @@ enigma.new_callback = function (machine, name)
         noderemove(head, n)
       end
     end
-    --if context then return head, true end
     return head
   end
   if format_is_context_p then
@@ -1229,20 +1246,41 @@ enigma.new_callback = function (machine, name)
       processor = cbk,
     }
     nodestasksappendaction("processors",
-                           "characters",
+                           --"characters",
+                           -- this one is “for users” (cf. node-tsk.lua)
+                           "before",
                            "thirddata.enigma.callbacks." .. name)
+    nodes.tasks.disableaction("processors",
+                              "thirddata.enigma.callbacks." .. name)
   else
     enigma.callbacks[name] = cbk
   end
 end
 
---local teststring = [[B I II III 01 01 01]]
-enigma.new_machine = function (args, name)
+local configurations = { }
+local save_raw_args = function (conf, name)
+  local current = configurations[name] or { }
+  for k, v in next, conf do
+    current[k] = v
+  end
+  configurations[name] = current
+end
+local retrieve_raw_args = function (name)
+  local cn = configurations[name]
+  return cn and tablecopy(cn) or { }
+end
+enigma.save_raw_args     = save_raw_args
+enigma.retrieve_raw_args = retrieve_raw_args
+
+local new_machine = function (args, name)
   local machine = new(args.day_key, args.rotor_setting)
   machine.name  = name
   verbose_level = args.verbose
   return machine
-end --stub
+end
+
+enigma.new_machine  = new_machine
+enigma.new_callback = new_callback
 
 ------------------------------------------------------------------------
 

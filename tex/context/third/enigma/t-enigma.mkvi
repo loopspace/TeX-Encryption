@@ -49,12 +49,13 @@ thirddata = thirddata or { }
 %D on the internal mechanisms but implement our own macro generator.
 %D \stopparagraph
 
-\def\do_define_enigma#id{%
+\def\do_do_define_enigma#id{%
+  \edef\enigmaid{#id}%
   \expandafter\gdef\csname start\enigmaid\endcsname{%
+    \endgraf
     \bgroup
     \ctxlua{
       if thirddata.enigma.machines["#id"] then
-        local callback = thirddata.enigma.callbacks["#id"],
         nodes.tasks.enableaction("processors",
                                  "thirddata.enigma.callbacks.#id")
       else
@@ -64,6 +65,8 @@ thirddata = thirddata or { }
   }%
   %
   \expandafter\gdef\csname stop\enigmaid\endcsname{%
+    \endgraf%% We need to force a paragraph here for the callback to be
+            %% applied.
     \ctxlua{
       nodes.tasks.disableaction("processors",
                                 "thirddata.enigma.callbacks.#id")
@@ -73,28 +76,49 @@ thirddata = thirddata or { }
   }%
 }
 
-\def\defineenigma#id{%
-  \begingroup
-  \edef\enigmaid{#id}%
-  \expandafter\do_define_enigma\expandafter{\enigmaid}%
+\def\inherit_enigma#to#from{%
+  \ctxlua{%
+    local enigma = thirddata.enigma
+    local current_args = enigma.retrieve_raw_args(\!!bs#from\!!es)
+    enigma.new_callback(
+      enigma.new_machine(current_args, \!!bs#to\!!es), \!!bs#to\!!es
+    )
+  }%
+  \do_do_define_enigma{#to}%
+}
+
+\def\do_define_enigma[#id][#secondid]{%
+  \ifsecondargument %% Copy an existing machine and callback.
+    \inherit_enigma{#id}{#secondid}%
+  \else             %% Create a new machine.
+    \iffirstargument
+      \do_do_define_enigma{#id}%
+    \else
+      \donothing
+    \fi
+  \fi
   \endgroup%
+}
+
+\def\defineenigma{%
+  \begingroup
+  \dodoubleempty\do_define_enigma%
 }
 
 %D \stopdocsection
 
 %D \startdocsection[title=Setup]
-\def\do_setup_enigma#args{%
+\def\do_do_setup_enigma#args{%
     \ctxlua{
       local enigma = thirddata.enigma
       local current_args =
         enigma.parse_args([====[\detokenize{#args}]====])
+      enigma.save_raw_args(current_args, [====[\currentenigmaid]====])
       enigma.new_callback(
         enigma.new_machine(current_args,
                            [====[\currentenigmaid]====]),
         [====[\currentenigmaid]====])
     }%
-  \popcatcodetable
-  \egroup%
 }
 
 %D \startparagraph
@@ -102,12 +126,22 @@ thirddata = thirddata or { }
 %D All the logic is at the Lua end, not much to see here …
 %D \stopparagraph
 
-\def\setupenigma#id{%
-  \bgroup
+\def\do_setup_enigma[#id][#args]{%
+  \ifsecondargument
     \edef\currentenigmaid{#id}
     \pushcatcodetable
     \catcodetable \txtcatcodes
-    \do_setup_enigma%
+      \do_do_setup_enigma{#args}%
+  \else
+    \donothing
+  \fi
+  \popcatcodetable
+  \egroup%
+}
+
+\def\setupenigma{%
+  \bgroup
+  \dodoubleempty\do_setup_enigma%
 }
 
 %D \stopdocsection
