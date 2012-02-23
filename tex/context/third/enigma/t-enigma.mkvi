@@ -78,11 +78,10 @@ thirddata = thirddata or { }
 
 \def\inherit_enigma#to#from{%
   \ctxlua{%
-    local enigma = thirddata.enigma
+    local enigma       = thirddata.enigma
     local current_args = enigma.retrieve_raw_args(\!!bs#from\!!es)
-    enigma.new_callback(
-      enigma.new_machine(current_args, \!!bs#to\!!es), \!!bs#to\!!es
-    )
+    enigma.new_callback(enigma.new_machine(current_args, \!!bs#to\!!es),
+                        \!!bs#to\!!es)
   }%
   \do_do_define_enigma{#to}%
 }

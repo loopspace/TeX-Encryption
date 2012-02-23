@@ -71,12 +71,12 @@ local iowrite                      = io.write
 local mathfloor                    = math.floor
 local mathrandom                   = math.random
 local next                         = next
-local nodecopy                     = node.copy
-local nodeid                       = node.id
-local nodeinsert_before            = node.insert_before
-local nodenew                      = node.new
-local noderemove                   = node.remove
-local nodetraverse                 = node.traverse
+local nodecopy                     = node and node.copy
+local nodeid                       = node and node.id
+local nodeinsert_before            = node and node.insert_before
+local nodenew                      = node and node.new
+local noderemove                   = node and node.remove
+local nodetraverse                 = node and node.traverse
 local nodesinstallattributehandler = format_is_context_p and nodes.installattributehandler
 local nodestasksappendaction       = format_is_context_p and nodes.tasks.appendaction
 local stringfind                   = string.find
@@ -109,8 +109,8 @@ else
   end
 end
 
-local glyph_node                   = nodeid"glyph"
-local glue_node                    = nodeid"glue"
+local glyph_node                   = node and nodeid"glyph"
+local glue_node                    = node and nodeid"glue"
 
 --[[ichd--
 \startparagraph
@@ -742,19 +742,22 @@ extraction of successive characters from the sequence.
 \TODO{Make \luafunction{encode_string} preprocess characters.}
 \stopparagraph
 --ichd]]--
-  --local encode_string = function (machine, str) --, pattern)
-  --  local init_state = pattern_to_state(pattern or get_random_pattern())
-  --  emit(1, pprint_init, init_state)
-  --  machine:set_state(init_state)
-  --  local result = { }
-  --  str = stringlower(str)
-  --  local n = 1 -- OPTIONAL could lookup machine.step instead
-  --  for char in utfcharacters(str) do
-  --    result[n] = machine:encode_char(char)
-  --    n = n + 1
-  --  end
-  --  return tableconcat(result)
-  --end
+  local encode_string = function (machine, str) --, pattern)
+    local result = { }
+    str = stringlower(str)
+    for char in utfcharacters(str) do
+      local tmp = machine:encode(char)
+      if type(tmp) == "table" then
+        for i=1, #tmp do
+          result[#result+1] = tmp[i]
+        end
+      else
+        result[#result+1] = tmp
+      end
+    end
+    machine:processed_chars()
+    return tableconcat(result)
+  end
 --[[ichd--
 \stopdocsection
 --ichd]]--
@@ -1273,9 +1276,9 @@ enigma.save_raw_args     = save_raw_args
 enigma.retrieve_raw_args = retrieve_raw_args
 
 local new_machine = function (args, name)
+  verbose_level = args.verbose
   local machine = new(args.day_key, args.rotor_setting)
   machine.name  = name
-  verbose_level = args.verbose
   return machine
 end
 

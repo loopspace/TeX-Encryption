@@ -1,0 +1,9 @@
+ Documentation Specification for the Enigma Module.
+[Manual]
+ to be written
+[Implementation]
+\PLAIN\_macros      tex     enigma.tex
+\CONTEXT\_macros    context t-enigma.mkvi
+\LATEX\_wrapper     latex   enigma.sty
+Functionality       lua     enigma.lua 
+Scripting           lua     mtx-t-enigma.lua
