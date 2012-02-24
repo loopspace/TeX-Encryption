@@ -111,12 +111,12 @@ thirddata = thirddata or { }
     \ctxlua{
       local enigma = thirddata.enigma
       local current_args =
-        enigma.parse_args([====[\detokenize{#args}]====])
-      enigma.save_raw_args(current_args, [====[\currentenigmaid]====])
+        enigma.parse_args(\!!bs\detokenize{#args}\!!es)
+      enigma.save_raw_args(current_args, \!!bs\currentenigmaid\!!es)
       enigma.new_callback(
         enigma.new_machine(current_args,
-                           [====[\currentenigmaid]====]),
-        [====[\currentenigmaid]====])
+                           \!!bs\currentenigmaid\!!es),
+        \!!bs\currentenigmaid\!!es)
     }%
 }
 

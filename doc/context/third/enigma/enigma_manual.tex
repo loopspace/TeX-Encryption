@@ -1,4 +1,10 @@
-\startdocchapter[title=Example: Encrypted Document]
+\startdocchapter[title=Usage]
+
+\startdocsection[title=Loading the Module/Package]
+  \TODO{instuctions for plain, latex + ctx}
+\stopdocsection
+
+\startdocsection[title=Basic Functionality]
 
 Encrypt the text of your document using the script interface. For
 a start try out the settings as given in below listing.
@@ -9,11 +15,11 @@ mtxrun --script mtx-t-enigma                    \
                 day_key = B I II III 01 01 01,  \
                 rotor_setting = xyz,            \
                 verbose=0"                      \
-       --text="Nobody can read this."
+       --text="Gentlemen don’t read each other’s mail, Mr. Turing\!"
 \stoptyping
 
 This will result in the thoroughly scrambled string
-\type{zdkbxwwnwkazpokvgr}.
+\type{omribshpwfrfjovkntgqgiabbkhjpxmhdztapkatwrvf}.
 Then, use the same settings you encrypted the text with in your
 document.
 
@@ -30,7 +36,7 @@ document.
 \starttext
 
 \startsecretmessage
-zdkbxwwnwkazpokvgr
+  omribshpwfrfjovkntgqgiabbkhjpxmhdztapkatwrvf
 \stopsecretmessage
 
 \stoptext
@@ -40,6 +46,42 @@ If you compile this document with \CONTEXT, the plain text will
 reappear.
 Notice that punctuation is substituted with the letter “x” before
 encryption and that spaces are omitted.
+
+\stopdocsection
+
+\startdocsection[title=Uses and Abuses]
+
+In \LUATEX, \identifier{callback}s may stack. This allows filtering the
+input through many enigma machines successively. For instance, in the
+following listing, two instances of the same machine are generated and
+applied.
+
+\startcontexttyping
+\usemodule[enigma]              %% load the module
+\defineenigma [secretmessage]   %% generate and
+\setupenigma  [secretmessage] [ %% configure a machine
+  other_chars = ok,
+  day_key = B IV V II 01 01 01 AD CN ET FL GI JV KZ PU QY WX,
+  rotor_setting = foo,
+  verbose=3,
+]
+
+%% now, copy the first machine’s settings
+\defineenigma [othermessage] [secretmessage]
+
+%% here we go!
+\starttext
+
+\startothermessage  %% enable machine 1
+\startsecretmessage %% enable machine 2 while no 1 is active
+Encryption equals decryption.
+\stopothermessage
+\stopsecretmessage
+
+\stoptext \endinput
+\stopcontexttyping
+
+\stopdocsection
 
 \stopdocchapter
 

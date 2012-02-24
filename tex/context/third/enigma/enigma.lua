@@ -578,6 +578,7 @@ ten.
     ["\n"] = "",
     ["\t"] = "",
     ["\v"] = "",
+    ["\\"] = "",
     -- Numbers are resolved.
     ["0"]  = "null",
     ["1"]  = "eins",
@@ -755,6 +756,7 @@ extraction of successive characters from the sequence.
         result[#result+1] = tmp
       end
     end
+    print(str)
     machine:processed_chars()
     return tableconcat(result)
   end
@@ -981,6 +983,7 @@ consists of three elements:
   local decode_char = encode_char -- hooray for involutory ciphers
 
   local encode_general = function (machine, chr)
+    local chr = stringlower(chr)
     local replacement = pp_substitutions[chr] or valid_char_p[chr] and chr
     if not replacement then return false end
 
@@ -1215,7 +1218,6 @@ local new_callback = function (machine, name)
   enigma.machines [name] = machine
   local format_is_context_p = format_is_context_p
   local cbk = function (a, _, c)
-    print(name, "<<<<<<<<<<<<<<<<<<<")
     local head = format_is_context_p and c or a
     for n in nodetraverse(head) do
       --print(node, node.id)
