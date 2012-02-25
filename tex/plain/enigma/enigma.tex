@@ -69,6 +69,7 @@
 
 \def\do_define_enigma#1{%
   \@EA\gdef\csname start\enigmaid\endcsname{%
+    \endgraf
     \bgroup%
     \directlua{%
       if packagedata.enigma and packagedata.enigma.machines["#1"] then
@@ -82,6 +83,7 @@
     }%
   }%
   \@EA\gdef\csname stop\enigmaid\endcsname{%
+    \endgraf
     \directlua{
       luatexbase.remove_from_callback("pre_linebreak_filter", "#1")
       packagedata.enigma.machines["#1"]:processed_chars()

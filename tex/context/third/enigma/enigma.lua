@@ -67,6 +67,7 @@ libraries.
 \stopparagraph
 --ichd]]--
 
+local ioread                       = io.read
 local iowrite                      = io.write
 local mathfloor                    = math.floor
 local mathrandom                   = math.random
@@ -272,6 +273,8 @@ local pprint_new_machine
 local pprint_rotor
 local pprint_rotor_scheme
 local pprint_step
+local polite_key_request
+local key_invalid
 do
   local eol = "\n"
 
@@ -463,9 +466,47 @@ and only then pushes the output.
     end
     return 0
   end
+--[[ichd--
+\startparagraph
+The \luafunction{polite_key_request} will be called in case the
+\identifier{day_key} field of the machine setup is empty at the time of
+initialization.
+\stopparagraph
+--ichd]]--
+  local s_request = "\n\n                     "
+                 .. underline"This is an encrypted document." .. [[
+
+
+            Please enter the document key for enigma machine
+                              “%s”.
+
+                              Key Format:
+
+Ref R1 R2 R3 I1 I2 I3 [P1 ..]   Ref: reflector A/B/C
+                                Rn:  rotor, I through V
+                                In:  ring position, 01 through 26
+                                Pn:  optional plugboard wiring, upto 32
+
+>]]
+  polite_key_request = function (name)
+    return stringformat(s_request, colorize(name, 33))
+  end
+
+  local s_invalid_key = colorize"Warning!"
+                     .. " The specified key is invalid."
+  key_invalid = function ()
+    return s_invalid_key
+  end
 end
 
+--[[ichd--
+\startparagraph
+The functions \luafunction{new} and \luafunction{ask_for_day_key} are
+used outside their scope, so we declare them beforehand.
+\stopparagraph
+--ichd]]--
 local new
+local ask_for_day_key
 do
 --[[ichd--
 \stopdocsection
@@ -756,7 +797,6 @@ extraction of successive characters from the sequence.
         result[#result+1] = tmp
       end
     end
-    print(str)
     machine:processed_chars()
     return tableconcat(result)
   end
@@ -812,25 +852,25 @@ extraction of successive characters from the sequence.
 
   local p_init = P{
     "init",
-    init               = Ct(V"do_init"),
+    init               = V"whitespace"^-1 * Ct(V"do_init"),
     do_init            = V"reflector"  * V"whitespace"
-                      * V"rotors"     * V"whitespace"
-                      * V"ring"
-                      * (V"whitespace" * V"plugboard")^-1
-                      ,
+                       * V"rotors"     * V"whitespace"
+                       * V"ring"
+                       * (V"whitespace" * V"plugboard")^-1
+                       ,
     reflector          = Cg(C(R("ac","AC")) / stringlower, "reflector"),
 
     rotors             = Cg(Ct(V"rotor" * V"whitespace"
-                            * V"rotor" * V"whitespace"
-                            * V"rotor"),
-                            "rotors")
-                      ,
+                             * V"rotor" * V"whitespace"
+                             * V"rotor"),
+                             "rotors")
+                       ,
     rotor              = Cs(V"roman_five"  / roman_digits
                           + V"roman_four"  / roman_digits
                           + V"roman_three" / roman_digits
                           + V"roman_two"   / roman_digits
                           + V"roman_one"   / roman_digits)
-                      ,
+                       ,
     roman_one          = P"I"   + P"i",
     roman_two          = P"II"  + P"ii",
     roman_three        = P"III" + P"iii",
@@ -838,10 +878,10 @@ extraction of successive characters from the sequence.
     roman_five         = P"V"   + P"v",
 
     ring               = Cg(Ct(V"double_digit" * V"whitespace"
-                            * V"double_digit" * V"whitespace"
-                            * V"double_digit"),
+                             * V"double_digit" * V"whitespace"
+                             * V"double_digit"),
                             "ring")
-                      ,
+                       ,
     double_digit       = C(R"02" * R"09"),
 
     plugboard          = Cg(V"do_plugboard", "plugboard"),
@@ -858,7 +898,7 @@ extraction of successive characters from the sequence.
     --                      * V"letter_combination")
     do_plugboard       = Ct(V"letter_combination"
                           * (V"whitespace" * V"letter_combination")^0)
-                      ,
+                       ,
     letter_combination = C(R("az", "AZ") * R("az", "AZ")),
 
     whitespace         = S" \n\t\v"^1,
@@ -1027,14 +1067,27 @@ consists of three elements:
   local processed_chars = function (machine)
     emit(1, pprint_machine_step, machine.step, machine.name)
   end
-  new = function (setup_string, pattern)
-    local raw_settings = lpegmatch(p_init, setup_string)
+
+  local handle_day_key handle_day_key = function (dk, name, old)
+    local result
+    if not dk or dk == "" then
+      dk = ask_for_day_key(name, old)
+    end
+    result = lpegmatch(p_init, dk)
+    -- If we don’t like the key we’re going to ask again. And again....
+    return result or handle_day_key(nil, name, dk)
+  end
+
+  new = function (name, setup_string, pattern)
+    --local raw_settings = lpegmatch(p_init, setup_string)
+    local raw_settings = handle_day_key(setup_string, name)
     local rotors, ring =
       get_rotors(raw_settings.rotors, raw_settings.ring)
     local plugboard = raw_settings.plugboard
                   and get_plugboard_substitution(raw_settings.plugboard)
                   or get_plugboard_substitution{ }
     local machine = {
+      name                = name,
       step                = 0, -- n characters encoded
       init                = {
         rotors = raw_settings.rotors,
@@ -1068,6 +1121,7 @@ consists of three elements:
     emit(1, pprint_new_machine, machine)
     return machine
   end
+
 end
 --[[ichd--
 \stopdocsection
@@ -1078,7 +1132,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Setup Argument Handling]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+--ichd]]--
+do
+--[[ichd--
 \startparagraph
 As the module is intended to work both with the Plain and \LATEX\
 formats as well as \CONTEXT, we can’t rely on format dependent setups.
@@ -1087,47 +1143,47 @@ as all the functionality resides in Lua.
 \stopparagraph
 --ichd]]--
 
-local p_args = P{
-  "args",
-  args           = Cf(Ct"" * (V"kv_pair" + V"emptyline")^0, rawset),
-  kv_pair        = Cg(V"key"
-                    * V"separator"
-                    * (V"value" * V"final"
-                     + V"empty"))
-                 * V"rest_of_line"^-1
-                 ,
-  key            = V"whitespace"^0 * C(V"key_char"^1),
-  key_char       = (1 - V"whitespace" - V"eol" - V"equals")^1,
-  separator      = V"whitespace"^0 * V"equals" * V"whitespace"^0,
-  empty          = V"whitespace"^0 * V"comma" * V"rest_of_line"^-1
-                 * Cc(false)
-                 ,
-  value          = C((V"balanced" + (1 - V"final"))^1),
-  final          = V"whitespace"^0 * V"comma" + V"rest_of_string",
-  rest_of_string = V"whitespace"^0 * V"eol_comment"^-1 * V"eol"^0 * V"eof",
-  rest_of_line   = V"whitespace"^0 * V"eol_comment"^-1 * V"eol",
-  eol_comment    = V"comment_string" * (1 - (V"eol" + V"eof"))^0,
-  comment_string = V"lua_comment" + V"TeX_comment",
-  TeX_comment    = V"percent",
-  lua_comment    = V"double_dash",
-  emptyline      = V"rest_of_line",
+  local p_args = P{
+    "args",
+    args           = Cf(Ct"" * (V"kv_pair" + V"emptyline")^0, rawset),
+    kv_pair        = Cg(V"key"
+                      * V"separator"
+                      * (V"value" * V"final"
+                      + V"empty"))
+                  * V"rest_of_line"^-1
+                  ,
+    key            = V"whitespace"^0 * C(V"key_char"^1),
+    key_char       = (1 - V"whitespace" - V"eol" - V"equals")^1,
+    separator      = V"whitespace"^0 * V"equals" * V"whitespace"^0,
+    empty          = V"whitespace"^0 * V"comma" * V"rest_of_line"^-1
+                  * Cc(false)
+                  ,
+    value          = C((V"balanced" + (1 - V"final"))^1),
+    final          = V"whitespace"^0 * V"comma" + V"rest_of_string",
+    rest_of_string = V"whitespace"^0 * V"eol_comment"^-1 * V"eol"^0 * V"eof",
+    rest_of_line   = V"whitespace"^0 * V"eol_comment"^-1 * V"eol",
+    eol_comment    = V"comment_string" * (1 - (V"eol" + V"eof"))^0,
+    comment_string = V"lua_comment" + V"TeX_comment",
+    TeX_comment    = V"percent",
+    lua_comment    = V"double_dash",
+    emptyline      = V"rest_of_line",
 
-  balanced       = V"balanced_brk" + V"balanced_brc",
-  balanced_brk   = V"lbrk" * (V"balanced" + (1 - V"rbrk"))^0 * V"rbrk",
-  balanced_brc   = V"lbrc" * (V"balanced" + (1 - V"rbrc"))^0 * V"rbrc",
+    balanced       = V"balanced_brk" + V"balanced_brc",
+    balanced_brk   = V"lbrk" * (V"balanced" + (1 - V"rbrk"))^0 * V"rbrk",
+    balanced_brc   = V"lbrc" * (V"balanced" + (1 - V"rbrc"))^0 * V"rbrc",
 
-  -- Terminals
-  eol            = P"\n\r" + P"\r\n" + P"\n" + P"\r", -- users do strange things
-  eof            = -P(1),
-  whitespace     = S" \t\v",
-  equals         = P"=",
-  dot            = P".",
-  comma          = P",",
-  dash           = P"-",    double_dash  = V"dash" * V"dash",
-  percent        = P"%",
-  lbrk           = P"[",    rbrk         = P"]",
-  lbrc           = P"{",    rbrc         = P"}",
-}
+    -- Terminals
+    eol            = P"\n\r" + P"\r\n" + P"\n" + P"\r", -- users do strange things
+    eof            = -P(1),
+    whitespace     = S" \t\v",
+    equals         = P"=",
+    dot            = P".",
+    comma          = P",",
+    dash           = P"-",    double_dash  = V"dash" * V"dash",
+    percent        = P"%",
+    lbrk           = P"[",    rbrk         = P"]",
+    lbrc           = P"{",    rbrc         = P"}",
+  }
 
 
 --[[ichd--
@@ -1138,7 +1194,6 @@ a sanitizer routine and, if so, apply it to its value.
 \stopparagraph
 --ichd]]--
 
-do
   local boolean_synonyms = {
     ["1"]    = true,
     doit     = true,
@@ -1155,7 +1210,7 @@ do
   local ans   = alpha + digit + space
   local p_ans = Cs((ans + (1 - ans / ""))^1)
   local alphanum_or_space  = function (str)
-    if type(str) ~= "string" then return "" end
+    if type(str) ~= "string" then return nil end
     return lpegmatch(p_ans, str)
   end
   local ensure_int = function (n)
@@ -1187,6 +1242,21 @@ do
       end
     end
     return args
+  end
+--[[ichd--
+\startparagraph
+If the machine setting lacks key settings then we’ll go ahead and ask
+the user directly, hence the function \luafunction{ask_for_day_key}.
+\stopparagraph
+--ichd]]--
+  ask_for_day_key = function (name, old)
+    if old then
+      emit(0, key_invalid)
+    end
+    emit(0, polite_key_request, name)
+    local result = ioread()
+    iowrite("\n")
+    return alphanum_or_space(result) or ask_for_day_key(name)
   end
 end
 
@@ -1279,10 +1349,10 @@ end
 enigma.save_raw_args     = save_raw_args
 enigma.retrieve_raw_args = retrieve_raw_args
 
+
 local new_machine = function (args, name)
   verbose_level = args.verbose
-  local machine = new(args.day_key, args.rotor_setting)
-  machine.name  = name
+  local machine = new(name, args.day_key, args.rotor_setting)
   return machine
 end
 

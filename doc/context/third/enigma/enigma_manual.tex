@@ -81,6 +81,50 @@ Encryption equals decryption.
 \stoptext \endinput
 \stopcontexttyping
 
+\useURL[kgbuch] [http://de.wikipedia.org/wiki/Kenngruppenbuch]
+       []       [code book]
+Now it’s certainly not wise to carry around the key to encrypted
+documents as plain text within those documents. The keys will have to be
+distributed via an independent channel, e.\,g. a \from[kgbuch].
+Keys in general don’t have to be supplied inside the document. If there
+is none specified, the module will interrupt the \TEX\ run and
+\emph{ask} for user input. Suppose Alice wanted to send an encrypted
+file to Bob and already generated the cipher text as follows:
+
+\starttyping
+mtxrun --script mtx-t-enigma                                    \
+        --setup="day_key =B I IV V 22 07 10 AZ DG IE YJ QM CW,  \
+                 rotor_setting = bar,                           \
+                 verbose=0"                                     \
+        --text="I have nothing to hide. From the NSA, that is."
+\stoptyping
+
+Alice would then include the result of this line in her \LATEX\ document
+as follows:
+
+\startlatextyping
+\documentclass{scrartcl}
+\usepackage{enigma}
+\defineenigma{decryption}
+%% Encryption key not given in the setup.
+\setupenigma{decryption}{
+  rotor_setting = bar,
+  verbose       = 3,
+}
+\begin{document}
+
+\startdecryption
+usbatbwcaajhzgeyzkqskupzbmdhbdepccgeh
+\stopdecryption
+
+\end{document}
+\stoplatextyping
+
+She subsequently mails this file to Bob and conveys the key through a
+secure channel. They only thing that will be left for Bob to do now, is
+to enter the key at the prompt when compiling the document with
+\LUALATEX.
+
 \stopdocsection
 
 \stopdocchapter
