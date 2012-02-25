@@ -4,6 +4,59 @@
   \TODO{instuctions for plain, latex + ctx}
 \stopdocsection
 
+\startdocsection[title=Options Explained]
+  \TODO{day key syntax, rotor settings strings etc.}
+
+%%% other_chars
+Most documents don’t naturally adhere to the machine-imposed restriction
+to the 26 letters of the Latin alphabet. The original encipherment
+directives comprised substitution tables to compensate for a set of intrinsic
+peculiarities of the German language, like umlauts and common digraphs.
+The \emph{Enigma} simulation module strives to apply these automatically
+but there is no guarantee of completeness.
+
+However, the Enigma lacks means of handling languages other than German.
+When the substitution lookup fails, there are two ways of proceeding:
+either to ignore the current character or to pass it on to the output as
+if nothing happened. The default behaviour is to drop alien letters and
+move on. If the user intends to keep these foreign characters instead,
+E can achieve this by setting the \identifier{other_chars} key in the
+Enigma setup to the value \emph{true}. An example of how the result of
+both methods may look, other thing being equal, is given in below
+listing (example for \CONTEXT).
+
+\startcontexttyping
+\usemodule [enigma]
+\defineenigma [secretmessage]
+\setupenigma  [secretmessage] [
+  other_chars = yes,
+  day_key = B V III II 12 03 01 GI JV KZ WM PU QY AD CN ET FL,
+  rotor_setting = ben,
+]
+
+\defineenigma [othermessage] [secretmessage]
+\setupenigma  [othermessage] [other_chars=wrong]
+
+\starttext
+
+\startsecretmessage
+  føo bąr baž
+\stopsecretmessage
+\startothermessage
+  føo bąr baž
+\stopothermessage
+
+\stoptext
+\stopcontexttyping
+
+Both methods have their disadvantages: if the user chooses to have the
+unknown characters removed it might distort the decrypted text to
+becoming illegible. Far more serious, however, are the consequences of
+keeping them. As artefacts in the ciphertext they would convey
+information about the structure of the plain text.
+
+\stopdocsection
+
 \startdocsection[title=Basic Functionality]
 
 Encrypt the text of your document using the script interface. For
@@ -11,8 +64,7 @@ a start try out the settings as given in below listing.
 
 \starttyping
 mtxrun --script mtx-t-enigma                    \
-       --setup="other_chars = ok,               \
-                day_key = B I II III 01 01 01,  \
+       --setup="day_key = B I II III 01 01 01,  \
                 rotor_setting = xyz,            \
                 verbose=0"                      \
        --text="Gentlemen don’t read each other’s mail, Mr. Turing\!"
@@ -27,7 +79,6 @@ document.
 \usemodule[enigma]
 \defineenigma [secretmessage]
 \setupenigma  [secretmessage] [
-  other_chars = ok,
   day_key = B I II III 01 01 01,
   rotor_setting = xyz,
   verbose=3,
@@ -46,40 +97,6 @@ If you compile this document with \CONTEXT, the plain text will
 reappear.
 Notice that punctuation is substituted with the letter “x” before
 encryption and that spaces are omitted.
-
-\stopdocsection
-
-\startdocsection[title=Uses and Abuses]
-
-In \LUATEX, \identifier{callback}s may stack. This allows filtering the
-input through many enigma machines successively. For instance, in the
-following listing, two instances of the same machine are generated and
-applied.
-
-\startcontexttyping
-\usemodule[enigma]              %% load the module
-\defineenigma [secretmessage]   %% generate and
-\setupenigma  [secretmessage] [ %% configure a machine
-  other_chars = ok,
-  day_key = B IV V II 01 01 01 AD CN ET FL GI JV KZ PU QY WX,
-  rotor_setting = foo,
-  verbose=3,
-]
-
-%% now, copy the first machine’s settings
-\defineenigma [othermessage] [secretmessage]
-
-%% here we go!
-\starttext
-
-\startothermessage  %% enable machine 1
-\startsecretmessage %% enable machine 2 while no 1 is active
-Encryption equals decryption.
-\stopothermessage
-\stopsecretmessage
-
-\stoptext \endinput
-\stopcontexttyping
 
 \useURL[kgbuch] [http://de.wikipedia.org/wiki/Kenngruppenbuch]
        []       [code book]
@@ -124,13 +141,94 @@ She subsequently mails this file to Bob and conveys the key through a
 secure channel. They only thing that will be left for Bob to do now, is
 to enter the key at the prompt when compiling the document with
 \LUALATEX.
+\stopdocsection
+
+\startdocsection[title=Uses and Abuses]
+
+In \LUATEX, \identifier{callback}s may stack. This allows filtering the
+input through many enigma machines successively. For instance, in the
+following listing, two instances of the same machine are generated and
+applied.
+
+\startcontexttyping
+\usemodule[enigma]              %% load the module
+\defineenigma [secretmessage]   %% generate and
+\setupenigma  [secretmessage] [ %% configure a machine
+  day_key = B IV V II 01 01 01 AD CN ET FL GI JV KZ PU QY WX,
+  rotor_setting = foo,
+  verbose=3,
+]
+
+%% now, copy the first machine’s settings
+\defineenigma [othermessage] [secretmessage]
+
+%% here we go!
+\starttext
+
+\startothermessage  %% enable machine 1
+\startsecretmessage %% enable machine 2 while no 1 is active
+Encryption equals decryption.
+\stopothermessage
+\stopsecretmessage
+
+\stoptext \endinput
+\stopcontexttyping
 
 \stopdocsection
 
 \stopdocchapter
 
-\startdocchapter[title=Acknowledgements]
-The Enigma module was inspired by Arno Trautmann’s
-\identifier{chickenize} package.
-Without \LUATEX, encryption on node-level would not have been possible.
+\startdocchapter[title=Metadata]
+\startdocsection[title=License]
+
+© 2012 \emph{Philipp Gesang}. All rights reserved.
+
+Redistribution and use in source and binary forms, with or
+without modification, are permitted provided that the following
+conditions are met:
+
+\startitemize[n]
+  \item Redistributions of source code must retain the above
+    copyright notice, this list of conditions and the following
+    disclaimer.
+  \item Redistributions in binary form must reproduce the
+    above copyright notice, this list of conditions and the
+    following disclaimer in the documentation and/or other
+    materials provided with the distribution.
+\stopitemize
+
+\begingroup
+\setuptolerance [horizontal,strict]
+\startalignment [right,nothyphenated]
+\noindentation\startsmallcaps
+  this software is provided by the copyright
+  holder “as is” and any express or implied warranties,
+  including, but not limited to, the implied warranties of
+  merchantability and fitness for a particular purpose are
+  disclaimed. in no event shall the copyright holder or
+  contributors be liable for any direct, indirect, incidental,
+  special, exemplary, or consequential damages (including, but
+  not limited to, procurement of substitute goods or services;
+  loss of use, data, or profits; or business interruption)
+  however caused and on any theory of liability, whether in
+  contract, strict liability, or tort (including negligence or
+  otherwise) arising in any way out of the use of this software,
+  even if advised of the possibility of such damage.
+\stopsmallcaps\endgraf
+\stopalignment
+\endgroup
+\stopdocsection
+
+\startdocsection[title=Acknowledgements]
+The idea to implement the \emph{Enigma} cipher for \TEX\ came up while I
+was reading \emph{The Code Book} by Simon Singh.
+This work contains an excellent portrayal of the history of German
+military cryptography and Allied cryptanalysis before and during the
+Second World War.
+Also, the Enigma module drew lots of inspiration from Arno Trautmann’s
+\identifier{chickenize} package, which remains the unsurpassed hands-on
+introduction to callback trickery.
+Finally, without \LUATEX\ encryption on node-level would not have been
+possible.
+\stopdocsection
 \stopdocchapter

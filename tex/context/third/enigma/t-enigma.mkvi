@@ -41,7 +41,7 @@ thirddata = thirddata or { }
 
 %D \startdocsection[title=Macro Generator]
 %D \startparagraph
-%D The main setup. The \texmacro{defineenigma} macro does not adhere to
+%D The main setup.\reference[listing:define]{} The \texmacro{defineenigma} macro does not adhere to
 %D the reommended practis of automatical macro derivation. Rather, we
 %D have our own parser do the job of setting globals. This is a
 %D consequence of the intention to offer the same behavior in any of the
@@ -76,10 +76,18 @@ thirddata = thirddata or { }
   }%
 }
 
+%D \startparagraph
+%D The \texmacro{inherit_enigma}\reference[listing:inherit]{} is called as
+%D an intermediate step when deriving one machine from an already existing
+%D one. It gets the stored configuration of its ancestor, relying on the
+%D \luafunction{retrieve_raw_args} function (see
+%D \at{page}[listing:retrieve].
+%D \stopparagraph
 \def\inherit_enigma#to#from{%
   \ctxlua{%
     local enigma       = thirddata.enigma
     local current_args = enigma.retrieve_raw_args(\!!bs#from\!!es)
+    enigma.save_raw_args(current_args, \!!bs#to\!!es)
     enigma.new_callback(enigma.new_machine(current_args, \!!bs#to\!!es),
                         \!!bs#to\!!es)
   }%

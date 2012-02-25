@@ -138,8 +138,8 @@ By default the output to \type{stdout} will be zero. The verbosity level
 can be adjusted in order to alleviate debugging.
 \stopparagraph
 --ichd]]--
-local verbose_level = 42
---local verbose_level = 0
+--local verbose_level = 42
+local verbose_level = 0
 
 --[[ichd--
 \startparagraph
@@ -575,10 +575,10 @@ accomplished, there will be an optional (re-)uppercasing.
 \stopparagraph
 
 \startparagraph
-Substitutions are applied onto the lowercased input. You might want
-to avoid some of these, above all the rules for numbers, because they
-translate single digits only. The solution is to write out numbers above
-ten.
+Substitutions \reference[listing:preproc]{}are applied onto the
+lowercased input. You might want to avoid some of these, above all the
+rules for numbers, because they translate single digits only. The
+solution is to write out numbers above ten.
 \stopparagraph
 --ichd]]--
 
@@ -737,9 +737,6 @@ local variable, \identifier{pb_char}.
     machine.step = machine.step + 1
     machine:rotate()
     local pb = machine.plugboard
-    --if valid_char_p[char] == nil then -- skip unwanted characters
-    --  return char
-    --end
     char = letter_to_value[char]
     local pb_char = pb[char]              -- first plugboard substitution
     emit(2, pprint_step, machine.step, char, pb_char)
@@ -1078,8 +1075,34 @@ consists of three elements:
     return result or handle_day_key(nil, name, dk)
   end
 
-  new = function (name, setup_string, pattern)
-    --local raw_settings = lpegmatch(p_init, setup_string)
+--[[ichd--
+\startparagraph
+The enigma encoding is restricted to an input -- and, naturally, output
+-- alphabet of exactly twenty-seven characters. Obviously, this would
+severely limit the set of encryptable documents. For this reason the
+plain text would be \emph{preprocessed} prior to encoding, removing
+spaces and substituting a range of characters, e.\,g. punctuation, with
+placeholders (“X”) from the encodable spectrum. See above
+\at{page}[listing:preproc] for a comprehensive list of substitutions.
+\stopparagraph
+
+\startparagraph
+The above mentioned preprocessing, however, does not even nearly extend
+to the whole unicode range that modern day typesetting is expected to
+handle. Thus, sooner or later an Enigma machine will encounter
+non-preprocessable characters and it will have to decide what to do with
+them. The Enigma module offers two ways to handle this kind of
+situation: \emph{drop} those characters, possibly distorting the
+deciphered plain text, or to leave them in, leaving hints behind as to
+the structure of the encrypted text. None of these is optional, so it is
+nevertheless advisable to not include non-latin characters in the plain
+text in the first place. The settings key \identifier{other_chars} (type
+boolean) determines whether we will keep or drop offending characters.
+\stopparagraph
+--ichd]]--
+
+  new = function (name, args)
+    local setup_string, pattern = args.day_key, args.rotor_setting
     local raw_settings = handle_day_key(setup_string, name)
     local rotors, ring =
       get_rotors(raw_settings.rotors, raw_settings.ring)
@@ -1096,6 +1119,7 @@ consists of three elements:
       rotors              = rotors,
       ring                = ring,
       state               = init_state,
+      other_chars         = args.other_chars,
       ---> a>1, b>2, c>3
       reflector           = letter_to_value[raw_settings.reflector],
       plugboard           = plugboard,
@@ -1225,7 +1249,7 @@ a sanitizer routine and, if so, apply it to its value.
   end
 
   local sanitizers = {
-    other_chars   = toboolean,
+    other_chars   = toboolean,          -- true = keep, false = drop
     day_key       = alphanum_or_space,
     rotor_setting = ensure_alpha,
     verbose       = ensure_int,
@@ -1294,20 +1318,24 @@ local new_callback = function (machine, name)
       if n.id == glyph_node then
         local chr         = utf8char(n.char)
         local replacement = machine:encode(chr)
-        if replacement == false then
-          --noderemove(head, n)
+        --if replacement == false then
+        if not replacement then
+          if not machine.other_chars then
+            noderemove(head, n)
+          end
         elseif type(replacement) == "string" then
           local insertion = nodecopy(n)
           insertion.char = utf8byte(replacement)
           nodeinsert_before(head, n, insertion)
+          noderemove(head, n)
         elseif type(replacement) == "table" then
           for i=1, #replacement do
             local insertion = nodecopy(n)
             insertion.char = utf8byte(replacement[i])
             nodeinsert_before(head, n, insertion)
           end
+          noderemove(head, n)
         end
-        noderemove(head, n)
       elseif  n.id == glue_node  then
         -- spaces are dropped
         noderemove(head, n)
@@ -1334,6 +1362,18 @@ local new_callback = function (machine, name)
   end
 end
 
+--[[ichd--
+\startparagraph
+Enigma\reference[listing:retrieve]{} machines can be copied and derived
+from one another at will, cf.  the \texmacro{defineenigma} on
+\at{page}[listing:define]. Two helper functions residing inside the
+\identifier{thirddata.enigma} namespace take care of these actions:
+\luafunction{save_raw_args} and \luafunction{retrieve_raw_args}. As soon
+as a machine is defined, we store its parsed options inside the table
+\identifier{configurations} for later reference. For further details on
+the machine derivation mechanism see \at{page}[listing:inherit].
+\stopparagraph
+--ichd]]--
 local configurations = { }
 local save_raw_args = function (conf, name)
   local current = configurations[name] or { }
@@ -1350,25 +1390,27 @@ enigma.save_raw_args     = save_raw_args
 enigma.retrieve_raw_args = retrieve_raw_args
 
 
-local new_machine = function (args, name)
-  verbose_level = args.verbose
-  local machine = new(name, args.day_key, args.rotor_setting)
+--[[ichd--
+\startparagraph
+The function \luafunction{new_machine} instantiates a table containing
+the complete specification of a workable \emph{Enigma} machine and other
+metadata. The result is intended to be handed over to the callback
+creation mechanism (\luafunction{new_callback}). However, the arguments
+table is usally stored away in the \identifier{thirddata.enigma}
+namespace anyway (\luafunction{save_raw_args}), so that the
+specification of any machine can be inherited by some new setup later
+on.
+\stopparagraph
+--ichd]]--
+local new_machine = function (_, name)
+  local args = configurations[name]
+  verbose_level = args.verbose or verbose_level
+  local machine = new(name, args)
   return machine
 end
 
 enigma.new_machine  = new_machine
 enigma.new_callback = new_callback
-
-------------------------------------------------------------------------
-
---local teststring = [[B I IV III 16 26 08 AD CN ET FL GI JV KZ PU QY WX]]
---local teststring = [[B I II III 01 01 01 AD CN ET FL GI JV KZ PU QY WX]]
---local teststring = [[B I II III 01 01 01]]
---local teststring = [[B I II III 01 01 02]]
---local teststring = [[B I II III 02 02 02]]
---local teststring = [[B I IV III 16 26 08 AD CN ET FL GI JV KZ PU QY WX]]
---local teststring = [[B I IV III 16 26 08]]
---local teststring = [[B I IV III 01 01 02]]
 
 --[[ichd--
 \stopdocsection

@@ -1,11 +1,11 @@
 --
 --------------------------------------------------------------------------------
---         FILE:  mtx-transliterate.lua
---        USAGE:  mtxrun --script transliterate [--mode=mode] --s="string"
---  DESCRIPTION:  context script interface for the Transliterator module
+--         FILE:  mtx-t-enigma.lua
+--        USAGE:  mtxrun --script enigma --setup="s" --text="t"
+--  DESCRIPTION:  context script interface for the Enigma module
 -- REQUIREMENTS:  latest ConTeXt MkIV
 --       AUTHOR:  Philipp Gesang (Phg), <gesang@stud.uni-heidelberg.de>
---      CREATED:  2011-06-11T16:14:16+0200
+--      CREATED:  2012-02-25 10:45:39+0100
 --------------------------------------------------------------------------------
 --
 
