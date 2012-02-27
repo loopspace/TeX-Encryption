@@ -5,7 +5,30 @@
 \stopdocsection
 
 \startdocsection[title=Options Explained]
-  \TODO{day key syntax, rotor settings strings etc.}
+
+\startitemize
+  \let\olditem\item
+  \let\item\undefined
+  \def\item#1#2{% 1 name, 2 type
+    \olditem
+    \identifier{#1}%
+    \reference[option:#1]{}%
+    \space
+    <\emph{#2}>%
+    \hskip1em%
+  }
+  \item{other_chars}{boolean} How to handle non-encodable characters, i.\,e.
+    glyphs outside the bare set of Latin letters; see below on
+    \at{page}[explained:other_chars].
+  \item{day_key}{string} Encryption key, i.\,e. a description of the initial
+    setup of an Enigma machine: the reflector used, the choice and
+    positions of the three rotors, the ring settings, and the plugboard
+    wiring.
+  \item{rotor_setting}{string} The initial rotor advancement.
+  \item{verbose}{integer} Controls overall verbosity level (\emph{global}!).
+\stopitemize
+
+\TODO{day key syntax, rotor settings strings etc.}
 
 %%% other_chars
 Most documents don’t naturally adhere to the machine-imposed restriction
@@ -15,15 +38,16 @@ peculiarities of the German language, like umlauts and common digraphs.
 The \emph{Enigma} simulation module strives to apply these automatically
 but there is no guarantee of completeness.
 
-However, the Enigma lacks means of handling languages other than German.
-When the substitution lookup fails, there are two ways of proceeding:
-either to ignore the current character or to pass it on to the output as
-if nothing happened. The default behaviour is to drop alien letters and
-move on. If the user intends to keep these foreign characters instead,
-E can achieve this by setting the \identifier{other_chars} key in the
-Enigma setup to the value \emph{true}. An example of how the result of
-both methods may look, other thing being equal, is given in below
-listing (example for \CONTEXT).
+However,\reference[explained:other_chars]{} the Enigma lacks means of
+handling languages other than German.  When the substitution lookup
+fails, there are two ways of proceeding: either to ignore the current
+character or to pass it on to the output as if nothing happened. The
+default behaviour is to drop alien letters and move on. If the user
+intends to keep these foreign characters instead, E can achieve this by
+setting the \identifier{other_chars} key in the Enigma setup to the
+value \emph{true}. An example of how the result of both methods may
+look, other thing being equal, is given in below listing (example for
+\CONTEXT).
 
 \startcontexttyping
 \usemodule [enigma]
