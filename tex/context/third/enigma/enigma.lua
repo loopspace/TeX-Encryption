@@ -93,6 +93,10 @@ local utf8len                      = unicode.utf8.len
 local utf8sub                      = unicode.utf8.sub
 local utfcharacters                = string.utfcharacters
 
+--- debugging tool (careful, this *will* break context!)
+--dofile(kpse.find_file("lualibs-table.lua")) -- archaic version :(
+--table.print = function (...) print(table.serialize(...)) end
+
 local tablecopy
 if format_is_context_p then
   tablecopy = table.copy
@@ -1404,7 +1408,8 @@ on.
 --ichd]]--
 local new_machine = function (_, name)
   local args = configurations[name]
-  verbose_level = args.verbose or verbose_level
+  --table.print(configurations)
+  verbose_level = args and args.verbose or verbose_level
   local machine = new(name, args)
   return machine
 end

@@ -43,9 +43,10 @@
     \directlua{
       local enigma = packagedata.enigma
       local current_args = enigma.parse_args([====[\detokenize{#1}]====])
+      enigma.save_raw_args(current_args, [====[\current_enigma_id]====])
       enigma.new_callback(enigma.new_machine(current_args,
-                                             [====[\currentenigmaid]====]),
-                          [====[\currentenigmaid]====])
+                                             [====[\current_enigma_id]====]),
+                          [====[\current_enigma_id]====])
     }%
   \egroup%
 }
@@ -54,7 +55,7 @@
 %D All the logic is at the Lua end, not much to see here …
 \def\setupenigma#1{%
   \bgroup
-    \edef\currentenigmaid{#1}
+    \edef\current_enigma_id{#1}
     \luatexcatcodetable \enigmasetupcatcodes
     \do_setup_enigma%
 }
