@@ -80,6 +80,7 @@ local nodenew                      = node and node.new
 local noderemove                   = node and node.remove
 local nodeslide                    = node and node.slide
 local nodetraverse                 = node and node.traverse
+local nodetraverse_id              = node and node.traverse_id
 local nodesinstallattributehandler = format_is_context_p and nodes.installattributehandler
 local nodestasksappendaction       = format_is_context_p and nodes.tasks.appendaction
 local stringfind                   = string.find
@@ -125,7 +126,7 @@ local DISC_NODE                    = node and nodeid"disc"
 local IGNORE_NODES = {
   [GLUE_NODE] = true,
   [KERN_NODE] = true,
-  [DISC_NODE] = true,
+--[DISC_NODE] = true,
 }
 
 --[[ichd--
@@ -1286,16 +1287,25 @@ a sanitizer routine and, if so, apply it to its value.
 \startparagraph
 If the machine setting lacks key settings then we’ll go ahead and ask
 the user directly, hence the function \luafunction{ask_for_day_key}.
+We abort after three misses lest we annoy the user \dots
 \stopparagraph
 --ichd]]--
-  ask_for_day_key = function (name, old)
+  local max_tries = 3
+  ask_for_day_key = function (name, old, try)
+    if try == max_tries then
+      iowrite[[
+Aborting. Entered invalid key three times.
+]]
+      os.exit()
+    end
     if old then
       emit(0, key_invalid)
     end
     emit(0, polite_key_request, name)
     local result = ioread()
     iowrite("\n")
-    return alphanum_or_space(result) or ask_for_day_key(name)
+    return alphanum_or_space(result) or
+           ask_for_day_key(name, (try and try + 1 or 1))
   end
 end
 
@@ -1332,7 +1342,10 @@ local new_callback = function (machine, name)
   space_node.spec.width   = current_fontparms.space
   space_node.spec.shrink  = current_fontparms.space_shrink
   space_node.spec.stretch = current_fontparms.space_stretch
-  local insert_with_spacing = function (head, n, insertion)
+  local insert_with_spacing = function (head, n, replacement)
+    local insertion = nodecopy(n)
+    insertion.char = utf8byte(replacement)
+    --print(utf8char(n.char), "=>", utf8char(insertion.char))
     nodeinsert_before(head, n, insertion)
     mod_5 = mod_5 + 1
     if mod_5 >= 5 then
@@ -1347,8 +1360,8 @@ local new_callback = function (machine, name)
     local head = format_is_context_p and c or a
     mod_5 = 0
     for n in nodetraverse(head) do
-      --print(node, node.id)
-      if n.id == GLYPH_NODE then
+      local nid = n.id
+      if nid == GLYPH_NODE then
         local chr         = utf8char(n.char)
         --print(chr, n)
         local replacement = machine:encode(chr)
@@ -1358,22 +1371,28 @@ local new_callback = function (machine, name)
             noderemove(head, n)
           end
         elseif type(replacement) == "string" then
-          local insertion = nodecopy(n)
-          insertion.char = utf8byte(replacement)
-          insert_with_spacing(head, n, insertion)
+          insert_with_spacing(head, n, replacement)
         elseif type(replacement) == "table" then
           for i=1, #replacement do
-            local insertion = nodecopy(n)
-            insertion.char = utf8byte(replacement[i])
-            insert_with_spacing(head, n, insertion)
+            insert_with_spacing(head, n, replacement)
           end
           noderemove(head, n)
         end
-      elseif IGNORE_NODES[n.id] then
-        -- spaces, ligatures and kerns are dropped
+      elseif IGNORE_NODES[nid] then
+        -- spaces and kerns are dropped
         noderemove(head, n)
-      else
-        print(n)
+      elseif nid == DISC_NODE then
+        --- ligatures need to be resolved if they are characters
+        local npre, npost = n.pre, n.post
+        if npre and npost then
+          local replacement_pre  = machine:encode(utf8char(npre.char))
+          local replacement_post = machine:encode(utf8char(npost.char))
+          insert_with_spacing(head,  npre, replacement_pre)
+          insert_with_spacing(head, npost, replacement_post)
+        end
+        noderemove(head, n)
+      --else
+      --  print(n)
       end
     end
     nodeslide(head)
