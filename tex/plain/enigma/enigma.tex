@@ -1,13 +1,20 @@
 \input{luatexbase.sty}
 \catcode`\_=11 % There’s no reason why this shouldn’t be the case.
+\catcode`\!=11
+%D Nice tool from luat-ini.mkiv. This really helps with those annoying
+%D string separators of Lua’s that clutter the source.
+\def\luastringsep{===} % this permits \typefile{self} otherwise nested b/e sep problems
+\edef\!!bs{[\luastringsep[}
+\edef\!!es{]\luastringsep]}
+
 %D \startdocsection[title=Prerequisites]
 %D \startparagraph
 %D Package loading and the namespacing issue are commented on in
 %D \identifier{enigma.lua}.
 %D \stopparagraph
-\directlua{%
+\directlua{
   packagedata = packagedata or { }
-  dofile(kpse.find_file"enigma.lua")
+  dofile(kpse.find_file\!!bs enigma.lua\!!es)
 }
 
 %D \startparagraph
@@ -42,11 +49,11 @@
 \def\do_setup_enigma#1{%
     \directlua{
       local enigma = packagedata.enigma
-      local current_args = enigma.parse_args([====[\detokenize{#1}]====])
-      enigma.save_raw_args(current_args, [====[\current_enigma_id]====])
+      local current_args = enigma.parse_args(\!!bs\detokenize{#1}\!!es)
+      enigma.save_raw_args(current_args, \!!bs\current_enigma_id\!!es)
       enigma.new_callback(enigma.new_machine(current_args,
-                                             [====[\current_enigma_id]====]),
-                          [====[\current_enigma_id]====])
+                                             \!!bs\current_enigma_id\!!es),
+                          \!!bs\current_enigma_id\!!es)
     }%
   \egroup%
 }
@@ -68,17 +75,18 @@
 %D different parts of the document.
 %D \stopparagraph
 
+\edef\c!pre_linebreak_filter{pre_linebreak_filter}
 \def\do_define_enigma#1{%
   \@EA\gdef\csname start\enigmaid\endcsname{%
     \endgraf
     \bgroup%
     \directlua{%
-      if packagedata.enigma and packagedata.enigma.machines["#1"] then
-        luatexbase.add_to_callback("pre_linebreak_filter",
-                                   packagedata.enigma.callbacks["#1"],
-                                   "#1")
+      if packagedata.enigma and packagedata.enigma.machines[ \!!bs#1\!!es] then
+        luatexbase.add_to_callback(\!!bs\c!pre_linebreak_filter\!!es,
+                                   packagedata.enigma.callbacks[ \!!bs#1\!!es],
+                                   \!!bs#1\!!es)
       else
-        print([[ENIGMA: No machine of that name: #1!]])
+        print\!!bs ENIGMA: No machine of that name: #1!\!!es
         os.exit()
       end
     }%
@@ -86,8 +94,8 @@
   \@EA\gdef\csname stop\enigmaid\endcsname{%
     \endgraf
     \directlua{
-      luatexbase.remove_from_callback("pre_linebreak_filter", "#1")
-      packagedata.enigma.machines["#1"]:processed_chars()
+      luatexbase.remove_from_callback(\!!bs\c!pre_linebreak_filter\!!es, \!!bs#1\!!es)
+      packagedata.enigma.machines[ \!!bs#1\!!es]:processed_chars()
     }%
     \egroup%
   }%
@@ -102,5 +110,6 @@
 }
 %D \stopdocsection
 
-\catcode`\_=8
+\catcode`\_=8  % \popcatcodes
+\catcode`\!=12 % reserved according to source2e
 % vim:ft=tex:sw=2:ts=2:expandtab:tw=72
