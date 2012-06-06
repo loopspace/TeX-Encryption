@@ -88,7 +88,7 @@ thirddata = thirddata or { }
     local enigma       = thirddata.enigma
     local current_args = enigma.retrieve_raw_args(\!!bs#from\!!es)
     enigma.save_raw_args(current_args, \!!bs#to\!!es)
-    enigma.new_callback(enigma.new_machine(current_args, \!!bs#to\!!es),
+    enigma.new_callback(enigma.new_machine(\!!bs#to\!!es),
                         \!!bs#to\!!es)
   }%
   \do_do_define_enigma{#to}%
@@ -122,8 +122,7 @@ thirddata = thirddata or { }
         enigma.parse_args(\!!bs\detokenize{#args}\!!es)
       enigma.save_raw_args(current_args, \!!bs\currentenigmaid\!!es)
       enigma.new_callback(
-        enigma.new_machine(current_args,
-                           \!!bs\currentenigmaid\!!es),
+        enigma.new_machine(\!!bs\currentenigmaid\!!es),
         \!!bs\currentenigmaid\!!es)
     }%
 }

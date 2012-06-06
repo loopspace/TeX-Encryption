@@ -75,8 +75,10 @@ local next                         = next
 local nodecopy                     = node and node.copy
 local nodeid                       = node and node.id
 local nodeinsert_before            = node and node.insert_before
+local nodeinsert_after             = node and node.insert_after
 local nodenew                      = node and node.new
 local noderemove                   = node and node.remove
+local nodeslide                    = node and node.slide
 local nodetraverse                 = node and node.traverse
 local nodesinstallattributehandler = format_is_context_p and nodes.installattributehandler
 local nodestasksappendaction       = format_is_context_p and nodes.tasks.appendaction
@@ -114,8 +116,17 @@ else
   end
 end
 
-local glyph_node                   = node and nodeid"glyph"
-local glue_node                    = node and nodeid"glue"
+local GLYPH_NODE                   = node and nodeid"glyph"
+local GLUE_NODE                    = node and nodeid"glue"
+local GLUE_SPEC_NODE               = node and nodeid"glue_spec"
+local KERN_NODE                    = node and nodeid"kern"
+local DISC_NODE                    = node and nodeid"disc"
+
+local IGNORE_NODES = {
+  [GLUE_NODE] = true,
+  [KERN_NODE] = true,
+  [DISC_NODE] = true,
+}
 
 --[[ichd--
 \startparagraph
@@ -1314,13 +1325,32 @@ on \dots\ many thanks to Khaled Hosny, who posted an answer to
 
 local new_callback = function (machine, name)
   enigma.machines [name] = machine
+  local mod_5 = 0
+  local current_fontparms = font.getfont(font.current()).parameters
+  local space_node        = nodenew(GLUE_NODE)
+  space_node.spec         = nodenew(GLUE_SPEC_NODE)
+  space_node.spec.width   = current_fontparms.space
+  space_node.spec.shrink  = current_fontparms.space_shrink
+  space_node.spec.stretch = current_fontparms.space_stretch
+  local insert_with_spacing = function (head, n, insertion)
+    nodeinsert_before(head, n, insertion)
+    mod_5 = mod_5 + 1
+    if mod_5 >= 5 then
+      mod_5 = 0
+      nodeinsert_after(head, insertion, nodecopy(space_node))
+    end
+    noderemove(head, n)
+    return head
+  end
   local format_is_context_p = format_is_context_p
   local cbk = function (a, _, c)
     local head = format_is_context_p and c or a
+    mod_5 = 0
     for n in nodetraverse(head) do
       --print(node, node.id)
-      if n.id == glyph_node then
+      if n.id == GLYPH_NODE then
         local chr         = utf8char(n.char)
+        --print(chr, n)
         local replacement = machine:encode(chr)
         --if replacement == false then
         if not replacement then
@@ -1330,21 +1360,23 @@ local new_callback = function (machine, name)
         elseif type(replacement) == "string" then
           local insertion = nodecopy(n)
           insertion.char = utf8byte(replacement)
-          nodeinsert_before(head, n, insertion)
-          noderemove(head, n)
+          insert_with_spacing(head, n, insertion)
         elseif type(replacement) == "table" then
           for i=1, #replacement do
             local insertion = nodecopy(n)
             insertion.char = utf8byte(replacement[i])
-            nodeinsert_before(head, n, insertion)
+            insert_with_spacing(head, n, insertion)
           end
           noderemove(head, n)
         end
-      elseif  n.id == glue_node  then
-        -- spaces are dropped
+      elseif IGNORE_NODES[n.id] then
+        -- spaces, ligatures and kerns are dropped
         noderemove(head, n)
+      else
+        print(n)
       end
     end
+    nodeslide(head)
     return head
   end
   if format_is_context_p then
@@ -1406,7 +1438,7 @@ specification of any machine can be inherited by some new setup later
 on.
 \stopparagraph
 --ichd]]--
-local new_machine = function (_, name)
+local new_machine = function (name)
   local args = configurations[name]
   --table.print(configurations)
   verbose_level = args and args.verbose or verbose_level

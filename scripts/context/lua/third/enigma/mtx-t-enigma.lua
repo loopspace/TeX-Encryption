@@ -47,9 +47,17 @@ local out = function (str)
   io.write(str)
 end
 
+local machine_id = "external"
 if setup and text then
-  local machine = enigma.new_machine(enigma.parse_args(setup))
-  machine.name  = "external"
+  local args    = enigma.parse_args(setup)
+  if not args then
+    application.help()
+    io.write"\n\n[Error] Could not process enigma setup!\n\n"
+  end
+  enigma.save_raw_args(args, machine_id)
+  --local machine = enigma.new_machine(enigma.parse_args(setup))
+  local machine = enigma.new_machine(machine_id)
+  --machine.name  = machine_id
   local result  = machine:encode_string(text)
   if result then
     out(result)

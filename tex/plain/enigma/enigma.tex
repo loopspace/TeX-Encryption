@@ -51,8 +51,7 @@
       local enigma = packagedata.enigma
       local current_args = enigma.parse_args(\!!bs\detokenize{#1}\!!es)
       enigma.save_raw_args(current_args, \!!bs\current_enigma_id\!!es)
-      enigma.new_callback(enigma.new_machine(current_args,
-                                             \!!bs\current_enigma_id\!!es),
+      enigma.new_callback(enigma.new_machine(\!!bs\current_enigma_id\!!es),
                           \!!bs\current_enigma_id\!!es)
     }%
   \egroup%
