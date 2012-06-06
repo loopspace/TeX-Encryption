@@ -1,0 +1,51 @@
+\documentclass[a5paper]{scrartcl}
+\parindent0pt
+% \usepackage{fontspec} 
+% \defaultfontfeatures{Ligatures={NoRequired, NoCommon, NoContextual}}
+%······································································%
+\usepackage   {enigma}
+%%·····································································%
+%% The first machine will be used for encryption of our plain text.
+\defineenigma {encryption}
+\setupenigma  {encryption} {
+  other_chars = yes,
+  day_key = B V III II 12 03 01 GI JV KZ WM PU QY AD CN ET FL,
+  rotor_setting = ben,
+}
+%%·····································································%
+%% This second machine below will be used to decrypt the string. It is
+%% initialized with exactly the same settings as the first one. The
+%% reason for this is that we can’t reuse the “encryption” machine as it
+%% will already have progressed to some later state after the
+%% encryption. Applying it on the ciphertext would yield a totally
+%% different string. Hence the need for another machine.
+\defineenigma{decryption}
+\setupenigma{decryption}{
+  other_chars = yes,
+  day_key = B V III II 12 03 01 GI JV KZ WM PU QY AD CN ET FL,
+  rotor_setting = ben,
+}
+%%·····································································%
+\begin{document}
+
+%%·····································································%
+%% Ciphertext in the PDF. Rely on the addressee to decrypt the document
+%% externally.
+\startencryption
+  Never underestimate the amount of money, time, and effort someone will expend to thwart a security system.
+\stopencryption
+
+%%·····································································%
+%% Input string generated with:
+%% mtxrun --script t-enigma  \
+%%        --setup="day_key=B V III II 12 03 01 GI JV KZ WM PU QY AD CN ET FL,\
+%%           rotor_setting=ben,\
+%%             other_chars=yes"\
+%%        --text="Never underestimate the amount of money,\
+%%                time, and effort someone will expend to\
+%%                thwart a security system."
+\startdecryption
+  aqsnwyxgqarpuzrdktscbslaqmdhyonywxkwhcdgphvuqsspfjwhlszahygjbzmfpcpbniahvfcuradntepxsfchnn
+\stopdecryption
+%%·····································································%
+\end{document}

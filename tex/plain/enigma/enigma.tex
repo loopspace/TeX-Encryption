@@ -1,4 +1,11 @@
-\input{luatexbase.sty}
+\expandafter\let\expandafter\x\csname ver@enigma.sty\endcsname
+\newif\ifenigmaisrunningplain
+\ifx\x\relax
+  \enigmaisrunningplaintrue
+  \input{luatexbase.sty}
+  \catcode`\@=11
+% \else latex
+\fi
 \catcode`\_=11 % There’s no reason why this shouldn’t be the case.
 \catcode`\!=11
 %D Nice tool from luat-ini.mkiv. This really helps with those annoying
@@ -76,7 +83,7 @@
 
 \edef\c!pre_linebreak_filter{pre_linebreak_filter}
 \def\do_define_enigma#1{%
-  \@EA\gdef\csname start\enigmaid\endcsname{%
+  \@EA\gdef\csname start\current_enigma_id\endcsname{%
     \endgraf
     \bgroup%
     \directlua{%
@@ -90,7 +97,7 @@
       end
     }%
   }%
-  \@EA\gdef\csname stop\enigmaid\endcsname{%
+  \@EA\gdef\csname stop\current_enigma_id\endcsname{%
     \endgraf
     \directlua{
       luatexbase.remove_from_callback(\!!bs\c!pre_linebreak_filter\!!es, \!!bs#1\!!es)
@@ -103,12 +110,14 @@
 \def\defineenigma#1{%
   \begingroup
   \let\@EA\expandafter
-  \edef\enigmaid{#1}%
-  \@EA\do_define_enigma\@EA{\enigmaid}%
+  \edef\current_enigma_id{#1}%
+  \@EA\do_define_enigma\@EA{\current_enigma_id}%
   \endgroup%
 }
+
 %D \stopdocsection
 
 \catcode`\_=8  % \popcatcodes
 \catcode`\!=12 % reserved according to source2e
+\ifenigmaisrunningplain\catcode`\@=12\fi
 % vim:ft=tex:sw=2:ts=2:expandtab:tw=72
