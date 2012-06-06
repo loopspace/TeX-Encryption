@@ -1,0 +1,31 @@
+\usemodule [enigma]
+\usetypescript [iwona]
+\setupbodyfont [iwona,20pt]
+
+\defineenigma [secretmessage]
+\setupenigma  [secretmessage] [
+  other_chars = yes,
+  day_key = B V III II 12 03 01 GI JV KZ WM PU QY AD CN ET FL,
+  rotor_setting = ben,
+]
+
+\defineenigma [othersecretmessage] [secretmessage]
+
+\defineenigma [othermessage] [secretmessage]
+\setupenigma  [othermessage] [other_chars=wrong]
+
+\starttext
+
+\startsecretmessage
+  føo bąr baž
+\stopsecretmessage
+
+\startothersecretmessage
+  iøtyąwqiž
+\stopothersecretmessage
+
+\startothermessage
+  føo bąr baž
+\stopothermessage
+
+\stoptext
