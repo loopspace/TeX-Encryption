@@ -1,6 +1,5 @@
-\expandafter\let\expandafter\x\csname ver@enigma.sty\endcsname
 \newif\ifenigmaisrunningplain
-\ifx\x\relax
+\ifcsname ver@enigma.sty\endcsname\else
   \enigmaisrunningplaintrue
   \input{luatexbase.sty}
   \catcode`\@=11
@@ -13,7 +12,6 @@
 \def\luastringsep{===} % this permits \typefile{self} otherwise nested b/e sep problems
 \edef\!!bs{[\luastringsep[}
 \edef\!!es{]\luastringsep]}
-
 %D \startdocsection[title=Prerequisites]
 %D \startparagraph
 %D Package loading and the namespacing issue are commented on in

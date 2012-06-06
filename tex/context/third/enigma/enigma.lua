@@ -124,7 +124,7 @@ local KERN_NODE                    = node and nodeid"kern"
 local DISC_NODE                    = node and nodeid"disc"
 
 local IGNORE_NODES = {
-  [GLUE_NODE] = true,
+--[GLUE_NODE] = true,
   [KERN_NODE] = true,
 --[DISC_NODE] = true,
 }
@@ -1323,6 +1323,28 @@ shuffling on the function side.
 \stopparagraph
 
 \startparagraph
+When grouping output into the traditional blocks of five letters we
+insert space nodes. As their properties depend on the font we need to
+recreate the space item for every paragraph. Also, as \CONTEXT\ does not
+preload a font we lack access to font metrics before \type{\starttext}.
+Thus creating the space earlier will result in an error.
+The function \luafunction{generate_space} will be called inside the
+callback in order to get an appropriate space glue.
+\stopparagraph
+--ichd]]--
+
+local generate_space = function ()
+  local current_fontparms = font.getfont(font.current()).parameters
+  local space_node        = nodenew(GLUE_NODE)
+  space_node.spec         = nodenew(GLUE_SPEC_NODE)
+  space_node.spec.width   = current_fontparms.space
+  space_node.spec.shrink  = current_fontparms.space_shrink
+  space_node.spec.stretch = current_fontparms.space_stretch
+  return space_node
+end
+
+--[[ichd--
+\startparagraph
 \useURL[khaled_hosny_texsx] [http://tex.stackexchange.com/a/11970]
        []                   [tex.sx]
 Registering a callback (“node attribute”?, “node task”?, “task action”?)
@@ -1335,17 +1357,14 @@ on \dots\ many thanks to Khaled Hosny, who posted an answer to
 
 local new_callback = function (machine, name)
   enigma.machines [name] = machine
+  local space_node
   local mod_5 = 0
-  local current_fontparms = font.getfont(font.current()).parameters
-  local space_node        = nodenew(GLUE_NODE)
-  space_node.spec         = nodenew(GLUE_SPEC_NODE)
-  space_node.spec.width   = current_fontparms.space
-  space_node.spec.shrink  = current_fontparms.space_shrink
-  space_node.spec.stretch = current_fontparms.space_stretch
   local insert_with_spacing = function (head, n, replacement)
     local insertion = nodecopy(n)
-    insertion.char = utf8byte(replacement)
-    --print(utf8char(n.char), "=>", utf8char(insertion.char))
+    if replacement then -- inefficient but bulletproof
+      insertion.char = utf8byte(replacement)
+      --print(utf8char(n.char), "=>", utf8char(insertion.char))
+    end
     nodeinsert_before(head, n, insertion)
     mod_5 = mod_5 + 1
     if mod_5 >= 5 then
@@ -1353,10 +1372,10 @@ local new_callback = function (machine, name)
       nodeinsert_after(head, insertion, nodecopy(space_node))
     end
     noderemove(head, n)
-    return head
   end
   local format_is_context_p = format_is_context_p
   local cbk = function (a, _, c)
+    space_node = generate_space ()
     local head = format_is_context_p and c or a
     mod_5 = 0
     for n in nodetraverse(head) do
@@ -1364,18 +1383,24 @@ local new_callback = function (machine, name)
       if nid == GLYPH_NODE then
         local chr         = utf8char(n.char)
         --print(chr, n)
-        local replacement = machine:encode(chr)
+        local replacement  = machine:encode(chr)
+        local treplacement = replacement and type(replacement)
         --if replacement == false then
         if not replacement then
-          if not machine.other_chars then
+          if machine.other_chars then
+            insert_with_spacing(head, n, nil)
+          else
             noderemove(head, n)
           end
-        elseif type(replacement) == "string" then
+        elseif treplacement == "string" then
           insert_with_spacing(head, n, replacement)
-        elseif type(replacement) == "table" then
+        elseif treplacement == "table" then
           for i=1, #replacement do
             insert_with_spacing(head, n, replacement)
           end
+        end
+      elseif nid == GLUE_NODE then
+        if n.subtype ~= 15 then -- keeping the parfillskip is convenient
           noderemove(head, n)
         end
       elseif IGNORE_NODES[nid] then
@@ -1392,6 +1417,7 @@ local new_callback = function (machine, name)
         end
         noderemove(head, n)
       --else
+      -- TODO other node types
       --  print(n)
       end
     end
