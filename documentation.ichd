@@ -1,5 +1,12 @@
  Documentation Specification for the Enigma Module.
- setup   extra_setups.tex
+author      = Philipp Gesang
+title       = Enigma
+description = Historical encryption for \CONTEXT, Plain\TEX and \LATEX
+license     = 2-clause {\sc bsd}
+version     = hg tip
+date        = 2012-06-07 22:32:13+0200
+email       = phg42.2a@gmail.com
+copyright   = 2010--\currentdate[year]
 [Manual]
  to be written
 doc     enigma_manual.tex
@@ -9,3 +16,4 @@ doc     enigma_manual.tex
 \LATEX\_wrapper     latex   enigma.sty
 Functionality       lua     enigma.lua 
 Scripting           lua     mtx-t-enigma.lua
+
