@@ -1,7 +1,7 @@
  Documentation Specification for the Enigma Module.
 author      = Philipp Gesang
 title       = Enigma
-description = Historical encryption for \CONTEXT, Plain\TEX and \LATEX
+description = Historical encryption for \CONTEXT, Plain\TEX\ and \LATEX documents
 license     = 2-clause {\sc bsd}
 version     = hg tip
 date        = 2012-06-07 22:32:13+0200

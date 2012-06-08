@@ -1,10 +1,26 @@
 %% If you’re looking for instructions concerning how to build this
 %% manual, please for now drop me an email: ·phg42.2a at gmail dot com·
 %% as you will need a certain mtx-script.
+\defineitemgroup [credits]
+\setupitemgroup  [credits] [
+  % before={\startnarrower[middle]},
+  % after=\stopnarrower,
+  left=,
+  right=,
+  margin=,
+  option=2,
+]
+\useurl [codebook]   [http://simonsingh.net/books/the-code-book/]
+\useurl [luatex-web] [http://www.luatex.org/]
+\useurl [chickenize] [https://github.com/alt/chickenize]
+
 \startdocchapter[title=Usage]
 
 \startdocsection[title=Loading the Module/Package]
+\startdocsubsection
   \TODO{instuctions for plain, latex + ctx}
+  The 
+\stopdocsubsection
 \stopdocsection
 
 \startdocsection[title=Options Explained]
@@ -36,10 +52,10 @@
 %%% other_chars
 Most documents don’t naturally adhere to the machine-imposed restriction
 to the 26 letters of the Latin alphabet. The original encipherment
-directives comprised substitution tables to compensate for a set of intrinsic
-peculiarities of the German language, like umlauts and common digraphs.
-The \emph{Enigma} simulation module strives to apply these automatically
-but there is no guarantee of completeness.
+directives comprised substitution tables to compensate for a set of
+intrinsic peculiarities of the German language, like umlauts and common
+digraphs.  The \modulename{Enigma} simulation module strives to apply
+these automatically but there is no guarantee of completeness.
 
 However,\reference[explained:other_chars]{} the Enigma lacks means of
 handling languages other than German.  When the substitution lookup
@@ -47,10 +63,10 @@ fails, there are two ways of proceeding: either to ignore the current
 character or to pass it on to the output as if nothing happened. The
 default behaviour is to drop alien letters and move on. If the user
 intends to keep these foreign characters instead, E can achieve this by
-setting the \identifier{other_chars} key in the Enigma setup to the
-value \emph{true}. An example of how the result of both methods may
-look, other thing being equal, is given in below listing (example for
-\CONTEXT).
+setting the \identifier{other_chars} key in the \modulename{Enigma}
+setup to the value \emph{true}. An example of how the result of both
+methods may look, other thing being equal, is given in below listing
+(example for \CONTEXT).
 
 \startcontexttyping
 \usemodule [enigma]
@@ -247,15 +263,21 @@ conditions are met:
 \stopdocsection
 
 \startdocsection[title=Acknowledgements]
-The idea to implement the \emph{Enigma} cipher for \TEX\ came up while I
-was reading \emph{The Code Book} by Simon Singh.
-This work contains an excellent portrayal of the history of German
-military cryptography and Allied cryptanalysis before and during the
-Second World War.
-Also, the Enigma module drew lots of inspiration from Arno Trautmann’s
-\identifier{chickenize} package, which remains the unsurpassed hands-on
-introduction to callback trickery.
-Finally, without \LUATEX\ encryption on node-level would not have been
-possible.
+\startcredits
+  \item The idea to implement the \emph{Enigma} cipher for \TEX\ came up
+        while I was reading \emph{The Code Book} by Simon Singh.
+        This work contains an excellent portrayal of the history of
+        German military cryptography and Allied cryptanalysis before and
+        during the Second World War.\par
+        \from[codebook]
+  \item Also, the \modulename{Enigma} module drew lots of inspiration
+        from Arno Trautmann’s \modulename{Chickenize} package, which
+        remains the unsurpassed hands-on introduction to callback
+        trickery.\par
+        \from[chickenize]
+  \item Finally, without \LUATEX, encryption on node-level would not
+        have been possible.\par
+        \from[luatex-web]
+\stopcredits
 \stopdocsection
 \stopdocchapter
