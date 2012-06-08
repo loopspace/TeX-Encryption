@@ -19,11 +19,77 @@
 \startdocsection[title=Loading the Module/Package]
 \startdocsubsection
   \TODO{instuctions for plain, latex + ctx}
-  The 
+  The intention is for the \modulename{Enigma} codebase to integrate
+  with the three most popular (as of 2012) \TEX\ formats:
+    \CONTEXT,
+    \PLAIN, and
+    \LATEX.
+  If the user interface does not fully conform with the common practise
+  of the latter two, please be lenient toward the author whose
+  intuitions are for the most part informed by \CONTEXT.
+  For this reason, a couple words concerning the interfaces will be
+  necessary.
+  The examples in this manual will be cycling through all three formats,
+  but once you get the general idea of how it works, you will have no
+  problem translating between coding styles.
+  Those familiar with \CONTEXT\ might, therefore, skip the following
+  paragraphs and continue directly with the next section on
+  \at{page}[sec:opts].
+  
+  The package is loaded as usual. For \PLAIN, issue a
+  \type{\input{enigma}}.
+  \LATEX-users need to place \type{\usepackage{enigma}} somewhere inside
+  the preamble.
+  (There are no package options.)
+  From this point on, instructions for both formats are the same.
+
+  The interface provides two basic macros from which all functionality
+  will be derived:
+    \texmacro{defineenigma} and \texmacro{setupenigma}.
+  Both are a kind of \emph{meta-macros}, meaning that they generate
+  other macros which may then be employed to access the functionality of
+  the package.
+  As such they naturally belong inside the preamble (if you chose to use
+  \modulename{Enigma} with \LATEX, that is).
+  It follows that the correct and only meaningful order is to
+  \texmacro{defineenigma} an enigma machine first and then
+  \texmacro{setupenigma} it.
+  The former takes a single, the latter a double argument.
+  Thus, \type{\defineenigma{encrypt}} creates a new environment
+  consisting of the macros \texmacro{startencrypt} and
+  \texmacro{stopencrypt}.%
+  \footnote{%
+    \CONTEXT-users will have noticed that there is no simple macro
+    \type{\encrypt{foo}}. The reason for this is that the callback
+    which the module relies on operates on node-level.
+    This means that for the Enigma encryption to have an effect it will
+    have to process entire paragraphs.
+    As encrypted passages are supposed to stand on their own, this
+    small limitation should not have a severe impact on functionality.
+    If you should, however, need a macro that works for smaller portions
+    of text, please send a feature request to the maintainer
+    (\ichdparameter{email}).
+  }
+  However, these are not usable right away, as we still have to set the
+  initial state of the machine.
+  This is achieved by the second meta-macro,
+  \type{\setupenigma{encrypt}{<args>}}, where \type{<args>} is a
+  placeholder for a list of \emph{assignments}, i.\,e. pairs of
+  \emph{key=value} statements by means of which all further parameters
+  are specified.
+  A list of possible parameters can be found in the next section,
+  examples of their effects will be given further below in the section
+  on functionality (see \at{page}[sec:fun]).%
+  \footnote{%
+    If you grasp the concept of paired \type{\define<foo>} --
+    \type{\setup<foo>} macros, then congratulations are in order:
+    you qualify for migration from your current macro package to
+    \CONTEXT.
+  }
 \stopdocsubsection
 \stopdocsection
 
-\startdocsection[title=Options Explained]
+\startdocsection[title=Options Explained,reference=sec:opts]
 
 \startitemize
   \let\olditem\item
@@ -65,8 +131,9 @@ default behaviour is to drop alien letters and move on. If the user
 intends to keep these foreign characters instead, E can achieve this by
 setting the \identifier{other_chars} key in the \modulename{Enigma}
 setup to the value \emph{true}. An example of how the result of both
-methods may look, other thing being equal, is given in below listing
-(example for \CONTEXT).
+methods may look, other things being equal, is given in below listing
+(example for \CONTEXT; see the file \type{enigma-example-context.tex} in
+the \type{doc/} subtree of your installation path).
 
 \startcontexttyping
 \usemodule [enigma]
@@ -100,7 +167,7 @@ information about the structure of the plain text.
 
 \stopdocsection
 
-\startdocsection[title=Basic Functionality]
+\startdocsection[title=Basic Functionality,reference=sec:fun]
 
 Encrypt the text of your document using the script interface. For
 a start try out the settings as given in below listing.
