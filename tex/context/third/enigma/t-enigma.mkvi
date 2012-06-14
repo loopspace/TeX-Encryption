@@ -51,7 +51,7 @@ thirddata = thirddata or { }
 
 \def\do_do_define_enigma#id{%
   \edef\enigmaid{#id}%
-  \expandafter\gdef\csname start\enigmaid\endcsname{%
+  \expandafter\gdef\csname \v!start\enigmaid\endcsname{%
     \endgraf
     \bgroup
     \ctxlua{
@@ -64,7 +64,7 @@ thirddata = thirddata or { }
     }%
   }%
   %
-  \expandafter\gdef\csname stop\enigmaid\endcsname{%
+  \expandafter\gdef\csname \v!stop\enigmaid\endcsname{%
     \endgraf%% We need to force a paragraph here for the callback to be
             %% applied.
     \ctxlua{

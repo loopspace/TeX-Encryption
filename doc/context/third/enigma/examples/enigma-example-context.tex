@@ -2,6 +2,16 @@
 \usetypescript [iwona]
 \setupbodyfont [iwona,20pt]
 
+\defineenigma [nilsettings]
+\setupenigma  [nilsettings] [ %% a machine with vanilla settings
+  other_chars = no,
+  day_key = B I II III 01 01 01,
+  rotor_setting = aaa,
+  verbose = 3,
+]
+
+\defineenigma [othernilsettings] [nilsettings]
+
 \defineenigma [secretmessage]
 \setupenigma  [secretmessage] [
   other_chars = yes,
@@ -15,6 +25,18 @@
 \setupenigma  [othermessage] [other_chars=wrong]
 
 \starttext
+
+\placefigure{Enigma output and its reversal using nil settings}{
+  \framed [width=.7\hsize,frame=off,align=middle]{
+    \startnilsettings
+      aaaaa aaaaa aaaaa aaaaa aaaaa aaaaa aaaaa aaaaa aa
+    \stopnilsettings
+
+    \startothernilsettings
+      bdzgo wcxlt ksbtm cdlpb muqof xyhcx tgyjf linhn xs
+    \stopothernilsettings
+  }
+}
 
 \startsecretmessage
   føo bąr baž
