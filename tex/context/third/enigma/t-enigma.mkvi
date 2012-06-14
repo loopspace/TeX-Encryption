@@ -49,9 +49,9 @@ thirddata = thirddata or { }
 %D on the internal mechanisms but implement our own macro generator.
 %D \stopparagraph
 
-\def\do_do_define_enigma#id{%
+\def\enigma_define_indeed#id{%
   \edef\enigmaid{#id}%
-  \expandafter\gdef\csname \v!start\enigmaid\endcsname{%
+  \expandafter\gdef\csname \e!start\enigmaid\endcsname{%
     \endgraf
     \bgroup
     \ctxlua{
@@ -64,7 +64,7 @@ thirddata = thirddata or { }
     }%
   }%
   %
-  \expandafter\gdef\csname \v!stop\enigmaid\endcsname{%
+  \expandafter\gdef\csname \e!stop\enigmaid\endcsname{%
     \endgraf%% We need to force a paragraph here for the callback to be
             %% applied.
     \ctxlua{
@@ -77,13 +77,13 @@ thirddata = thirddata or { }
 }
 
 %D \startparagraph
-%D The \texmacro{inherit_enigma}\reference[listing:inherit]{} is called as
+%D The \texmacro{enigma_inherit}\reference[listing:inherit]{} is called as
 %D an intermediate step when deriving one machine from an already existing
 %D one. It gets the stored configuration of its ancestor, relying on the
 %D \luafunction{retrieve_raw_args} function (see
 %D \at{page}[listing:retrieve].
 %D \stopparagraph
-\def\inherit_enigma#to#from{%
+\def\enigma_inherit#to#from{%
   \ctxlua{%
     local enigma       = thirddata.enigma
     local current_args = enigma.retrieve_raw_args(\!!bs#from\!!es)
@@ -91,15 +91,15 @@ thirddata = thirddata or { }
     enigma.new_callback(enigma.new_machine(\!!bs#to\!!es),
                         \!!bs#to\!!es)
   }%
-  \do_do_define_enigma{#to}%
+  \enigma_define_indeed{#to}%
 }
 
-\def\do_define_enigma[#id][#secondid]{%
+\def\enigma_define[#id][#secondid]{%
   \ifsecondargument %% Copy an existing machine and callback.
-    \inherit_enigma{#id}{#secondid}%
+    \enigma_inherit{#id}{#secondid}%
   \else             %% Create a new machine.
     \iffirstargument
-      \do_do_define_enigma{#id}%
+      \enigma_define_indeed{#id}%
     \else
       \donothing
     \fi
@@ -109,13 +109,13 @@ thirddata = thirddata or { }
 
 \def\defineenigma{%
   \begingroup
-  \dodoubleempty\do_define_enigma%
+  \dodoubleempty\enigma_define
 }
 
 %D \stopdocsection
 
 %D \startdocsection[title=Setup]
-\def\do_do_setup_enigma#args{%
+\def\enigma_setup#args{%
     \ctxlua{
       local enigma = thirddata.enigma
       local current_args =
@@ -137,7 +137,7 @@ thirddata = thirddata or { }
     \edef\currentenigmaid{#id}
     \pushcatcodetable
     \catcodetable \txtcatcodes
-      \do_do_setup_enigma{#args}%
+      \enigma_setup{#args}%
   \else
     \donothing
   \fi
