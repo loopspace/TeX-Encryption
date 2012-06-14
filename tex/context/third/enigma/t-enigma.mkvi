@@ -115,7 +115,7 @@ thirddata = thirddata or { }
 %D \stopdocsection
 
 %D \startdocsection[title=Setup]
-\def\enigma_setup#args{%
+\def\enigma_setup_indeed#args{%
     \ctxlua{
       local enigma = thirddata.enigma
       local current_args =
@@ -132,12 +132,12 @@ thirddata = thirddata or { }
 %D All the logic is at the Lua end, not much to see here …
 %D \stopparagraph
 
-\def\do_setup_enigma[#id][#args]{%
+\def\enigma_setup[#id][#args]{%
   \ifsecondargument
     \edef\currentenigmaid{#id}
     \pushcatcodetable
     \catcodetable \txtcatcodes
-      \enigma_setup{#args}%
+      \enigma_setup_indeed{#args}%
   \else
     \donothing
   \fi
@@ -147,7 +147,7 @@ thirddata = thirddata or { }
 
 \def\setupenigma{%
   \bgroup
-  \dodoubleempty\do_setup_enigma%
+  \dodoubleempty\enigma_setup%
 }
 
 %D \stopdocsection

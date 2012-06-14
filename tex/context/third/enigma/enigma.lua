@@ -123,11 +123,11 @@ local GLUE_SPEC_NODE               = node and nodeid"glue_spec"
 local KERN_NODE                    = node and nodeid"kern"
 local DISC_NODE                    = node and nodeid"disc"
 
-local IGNORE_NODES = {
+local IGNORE_NODES = node and {
 --[GLUE_NODE] = true,
   [KERN_NODE] = true,
 --[DISC_NODE] = true,
-}
+} or { }
 
 --[[ichd--
 \startparagraph
@@ -199,10 +199,16 @@ do
     q = 17, r = 18, s = 19, t = 20, u = 21, v = 22, w = 23, x = 24,
     y = 25, z = 26,
   }
+--[[ichd--
+\startparagraph
+The five rotors to simulate.\reference[listing:rotor_wiring]{}
+Their wirings are created from strings at runtime, see below the
+function \luafunction{get_rotors}.
+\stopparagraph
+--ichd]]--
 
   --[[
     Nice: http://www.ellsbury.com/ultraenigmawirings.htm
-    Wirings are created from strings at runtime.
   ]]--
   alpha_sorted = "abcdefghijklmnopqrstuvwxyz"
   raw_rotor_wiring = {
@@ -233,7 +239,7 @@ mnemonic.
   end
 
 --[[ichd--
-\placetable[here][]{The three reflectors and their substitution
+\placetable[here][listing:reflector]{The three reflectors and their substitution
                     rules.}{%
   \starttabulate[|r|l|]
     \NC UKW a \NC AE BJ CM DZ FL GY HX IV KW NR OQ PU ST \NC \NR
@@ -866,7 +872,7 @@ extraction of successive characters from the sequence.
   local p_init = P{
     "init",
     init               = V"whitespace"^-1 * Ct(V"do_init"),
-    do_init            = V"reflector"  * V"whitespace"
+    do_init            = (V"reflector" * V"whitespace")^-1
                        * V"rotors"     * V"whitespace"
                        * V"ring"
                        * (V"whitespace" * V"plugboard")^-1
@@ -1081,12 +1087,22 @@ consists of three elements:
     emit(1, pprint_machine_step, machine.step, machine.name)
   end
 
+--[[ichd--
+\startparagraph
+The day key is entrusted to the function \luafunction{handle_day_key}.
+If the day key is the empty string or \type{nil}, it will ask for a key
+on the terminal. (Cf. below, \at{page}[listing:ask_for_day_key].)
+Lesson: don’t forget providing day keys in your setups when running in
+batch mode.
+\stopparagraph
+--ichd]]--
   local handle_day_key handle_day_key = function (dk, name, old)
     local result
     if not dk or dk == "" then
       dk = ask_for_day_key(name, old)
     end
     result = lpegmatch(p_init, dk)
+    result.reflector = result.reflector or "b"
     -- If we don’t like the key we’re going to ask again. And again....
     return result or handle_day_key(nil, name, dk)
   end
@@ -1286,6 +1302,7 @@ a sanitizer routine and, if so, apply it to its value.
 --[[ichd--
 \startparagraph
 If the machine setting lacks key settings then we’ll go ahead and ask
+\reference[listing:ask_for_day_key]{}%
 the user directly, hence the function \luafunction{ask_for_day_key}.
 We abort after three misses lest we annoy the user \dots
 \stopparagraph

@@ -10,15 +10,24 @@
   margin=,
   option=2,
 ]
-\useurl [codebook]   [http://simonsingh.net/books/the-code-book/]
-\useurl [luatex-web] [http://www.luatex.org/]
-\useurl [chickenize] [https://github.com/alt/chickenize]
+
+\pushcatcodetable
+\setcatcodetable\txtcatcodes
+\useurl [chickenize]    [https://github.com/alt/chickenize]
+\useurl [codebook]      [http://simonsingh.net/books/the-code-book/]
+\useurl [key_procedure] [http://users.telenet.be/d.rijmenants/en/enigmaproc.htm]
+\useurl [luatex-web]    [http://www.luatex.org/]
+\useurl [rotor_wirings] [http://www.ellsbury.com/ultraenigmawirings.htm]
+\useurl [wp:day_key]    [http://en.wikipedia.org/wiki/Cryptanalysis_of_the_Enigma#Key_setting]
+        []              [\hyphenatedurl{http://en.wikipedia.org/wiki/Cryptanalysis_of_the_Enigma\#Key_setting}]
+\useurl [wp:ring]       [http://en.wikipedia.org/wiki/Enigma_rotor_details#The_ring_setting]
+        []              [\hyphenatedurl{http://en.wikipedia.org/wiki/Enigma_rotor_details\#The_ring_setting}]
+\popcatcodetable
+
 
 \startdocchapter[title=Usage]
 
 \startdocsection[title=Loading the Module/Package]
-\startdocsubsection
-  \TODO{instuctions for plain, latex + ctx}
   The intention is for the \modulename{Enigma} codebase to integrate
   with the three most popular (as of 2012) \TEX\ formats:
     \CONTEXT,
@@ -34,7 +43,7 @@
   problem translating between coding styles.
   Those familiar with \CONTEXT\ might, therefore, skip the following
   paragraphs and continue directly with the next section on
-  \at{page}[sec:opts].
+  \at{page}[sec:opts].%
   
   The package is loaded as usual. For \PLAIN, issue a
   \type{\input{enigma}}.
@@ -77,21 +86,53 @@
   placeholder for a list of \emph{assignments}, i.\,e. pairs of
   \emph{key=value} statements by means of which all further parameters
   are specified.
-  A list of possible parameters can be found in the next section,
+  The possible parameters are listed in the next section,
   examples of their effects will be given further below in the section
   on functionality (see \at{page}[sec:fun]).%
   \footnote{%
-    If you grasp the concept of paired \type{\define<foo>} --
+    If you grasp the concept of paired \type{\define<foo>} \endash\space
     \type{\setup<foo>} macros, then congratulations are in order:
     you qualify for migration from your current macro package to
     \CONTEXT.
   }
-\stopdocsubsection
 \stopdocsection
-
 \startdocsection[title=Options Explained,reference=sec:opts]
 
+At the moment, the \texmacro{setupenigma} macro in any format  accepts
+the following parameters.
+% \startpostponing[+2]%% messes up floats -- why?
+  \placefigure[right]{Usage example for the \PLAIN\ format.}{
+    % \framed[align=right,frameoffset=1em]{%
+    \framed[align=right,frameoffset=1em,frame=off]{%
+      \startlatextyping[before=,after=,]
+      \input {enigma}
+      %% Definition ··········· %%
+      \defineenigma {encryption}
+      %% Setup ················ %%
+      \setupenigma  {encryption} {
+        other_chars = no,
+        day_key = I II III
+                  01 01 01,
+        rotor_setting = aaa,
+        verbose = 1,
+      }
+      %% Usage ················ %%
+      \startencryption
+        aaaaa aaaaa aaaaa
+        aaaaa aaaaa aaaaa 
+      \stopencryption
+      \startencryption
+        Nobody in Poland is going
+        to be able to read this,
+        har har!
+      \stopencryption
+      \bye
+      \stoplatextyping
+    }
+  }
+% \stoppostponing
 \startitemize
+  \setuptolerance[tolerant]%% it’s crowded in here due to the float
   \let\olditem\item
   \let\item\undefined
   \def\item#1#2{% 1 name, 2 type
@@ -113,9 +154,61 @@
   \item{verbose}{integer} Controls overall verbosity level (\emph{global}!).
 \stopitemize
 
-\TODO{day key syntax, rotor settings strings etc.}
+%% day key
+To state the obvious, the value of \identifier{day_key} serves as the
+\emph{day key} for encryption. An Enigma day key ordinarily consists of
+(1) a list of the the rotor configuration,
+(2) the ring settings, and
+(3) the plugboard connections.
+Together these have the denotation \emph{day key}, because they are
+meant to be supplied in special code books by central authority, one for
+each day.\footnote{%
+  Read about the historical directives for daily key renewal at
+  \from[key_procedure]; also, don’t miss the explanation on Wikipedia:
+  \from[wp:day_key].
+}
+In the \modulename{Enigma} setup, the day key starts
+with a triple of Roman numerals ({\sc i} to {\sc v}) describing which
+of the five rotors is located in which of the three slots.
+(e.\,g. \type{I VI II}).\footnote{%
+  For the individual wirings of the five rotors see
+  \from[rotor_wirings], as well as the implementation below at
+  \at{page}[listing:rotor_wiring].
+}
+Its next part is the ring setting, a triple of two-digit integers that
+are the amount by which the internal wiring of each rotor has been
+shifted (\type{03 23 11}). As the Enigma encrypts only the letters of
+the Latin alphabet, sane values range from one (first position: no
+shift) to twenty six.\footnote{%
+  Consult \from[wp:ring] for an introduction into the ring mechanics.
+}
+The third section specifies which pairs of letters are substituted by
+each other by means of plugboard connections (\type{NI CE GO LD ...}).
+There can be zero to thirteen of these redirections, thus the presence
+of this section is entirely optional.
+Also part of the \identifier{day_key}, but not mentioned yet, is the
+choice of the \emph{reflector}.
+It may be specified as one of the three letters \type{A}, \type{B} and
+\type{C} as the first item. If no reflector is requested explicitly, the
+machine defaults to \type{B}, which is actually the only one of the
+three models that had been in widespread use
+(see below on \at{page}[listing:reflector] for the wirings).
+
+Initialization is not complete without a \identifier{rotor_setting}.
+This is a triple of letters, each representing the initial state of
+one rotor (e.\,g. \type{fkd}). Historically this was not part of the day
+key but supposed to be chosen at random by the operating signal officer.
 
 %%% other_chars
+% The option \identifier{other_chars} determines how the machine -- in our
+% Unicode-aware times -- should behave when it encounters a non-Latin
+% letter. For the time being it can either remove them from the input
+% (value \emph{no}) or pass them through unmodified (\emph{yes}). Note
+% that this is independent of the \emph{preprocessing} of characters like
+% punctuation and umlauts, which is done automatically.
+% (See below \at{page}[listing:preproc] for the internal substitution
+% list.)
+
 Most documents don’t naturally adhere to the machine-imposed restriction
 to the 26 letters of the Latin alphabet. The original encipherment
 directives comprised substitution tables to compensate for a set of
@@ -181,7 +274,7 @@ mtxrun --script mtx-t-enigma                    \
 \stoptyping
 
 This will result in the thoroughly scrambled string
-\type{omribshpwfrfjovkntgqgiabbkhjpxmhdztapkatwrvf}.
+\typ{omribshpwfrfjovkntgqgi abbkhjpxmhdztapkatwrvf}.
 Then, use the same settings you encrypted the text with in your
 document.
 
