@@ -103,7 +103,7 @@ local utfcharacters                = string.utfcharacters
 local tablecopy
 if format_is_context_p then
   tablecopy = table.copy
-else
+else -- could use lualibs instead but not worth the overhead
   tablecopy = function (t) -- ignores tables as keys
     local result = { }
     for k, v in next, t do
@@ -1041,6 +1041,21 @@ consists of three elements:
 
   local decode_char = encode_char -- hooray for involutory ciphers
 
+--[[ichd--
+\startparagraph
+The function \luafunction{encode_general} is an intermediate step for
+the actual single-character encoding / decoding routine
+\luafunction{enchode_char}.
+Its purpose is to ensure encodability of a given character before
+passing it along.
+Characters are first checked against the replacement table
+\identifier{pp_substitutions} (see \at{page}[listing:preproc]).
+For single-character replacements the function returns the encoded
+character (string).
+However, should the replacement turn out to consist of more than one
+character, each one will be encoded successively, yielding a list.
+\stopparagraph
+--ichd]]--
   local encode_general = function (machine, chr)
     local chr = stringlower(chr)
     local replacement = pp_substitutions[chr] or valid_char_p[chr] and chr
