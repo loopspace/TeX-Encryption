@@ -13,17 +13,41 @@
 
 \pushcatcodetable
 \setcatcodetable\txtcatcodes
-\useurl [chickenize]    [https://github.com/alt/chickenize]
-\useurl [codebook]      [http://simonsingh.net/books/the-code-book/]
-\useurl [key_procedure] [http://users.telenet.be/d.rijmenants/en/enigmaproc.htm]
-\useurl [luatex-web]    [http://www.luatex.org/]
-\useurl [rotor_wirings] [http://www.ellsbury.com/ultraenigmawirings.htm]
-\useurl [wp:day_key]    [http://en.wikipedia.org/wiki/Cryptanalysis_of_the_Enigma#Key_setting]
-        []              [\hyphenatedurl{http://en.wikipedia.org/wiki/Cryptanalysis_of_the_Enigma\#Key_setting}]
-\useurl [wp:ring]       [http://en.wikipedia.org/wiki/Enigma_rotor_details#The_ring_setting]
-        []              [\hyphenatedurl{http://en.wikipedia.org/wiki/Enigma_rotor_details\#The_ring_setting}]
+\useurl [chickenize]     [https://github.com/alt/chickenize]
+\useurl [codebook]       [http://simonsingh.net/books/the-code-book/]
+\useurl [key_procedure]  [http://users.telenet.be/d.rijmenants/en/enigmaproc.htm]
+\useurl [luatex-web]     [http://www.luatex.org/]
+\useurl [rotor_wirings]  [http://www.ellsbury.com/ultraenigmawirings.htm]
+\useurl [wp:day_key]     [http://en.wikipedia.org/wiki/Cryptanalysis_of_the_Enigma#Key_setting]
+        []               [\hyphenatedurl{http://en.wikipedia.org/wiki/Cryptanalysis_of_the_Enigma\#Key_setting}]
+\useurl [wp:ring]        [http://en.wikipedia.org/wiki/Enigma_rotor_details#The_ring_setting]
+        []               [\hyphenatedurl{http://en.wikipedia.org/wiki/Enigma_rotor_details\#The_ring_setting}]
+\useurl [initialization] [http://w1tp.com/enigma/mewirg.htm]
+\useurl [model-i]        [http://www.cryptomuseum.com/crypto/enigma/i/index.htm]
+\useurl [ecollection]    [http://cryptocellar.org/enigma/]
+\useurl [heinz_diss]     [http://rzbl04.biblio.etc.tu-bs.de:8080/docportal/receive/DocPortal_document_00001705]
 \popcatcodetable
 
+\startdocchapter[title=Introduction]
+  This module implements an \emph{Enigma} cipher that is equivalent to
+  the most widely distributed model: the Enigma~I (subtypes {\sc m1}
+  {\sc m2} and {\sc m3}).%
+  \footnote{%
+    See \from[model-i] for a showcase.
+  }
+  Machines of this type had three rotors, a non-moving reflector and,
+  as a novelty at the time of their introduction, a plugboard.
+  The simulation accepts arbitrary configurations of these components,
+  as well as the starting position of the rotors, and then processes
+  text accordingly.
+  Depending on the input, this yields the plaintext or ciphertext, as
+  encryption and decryption are the same.
+
+  The code is provided as a module (interface for \CONTEXT) as well as
+  a package (\PLAIN, \LATEX).
+  It is subject to the {\sc bsd} license, see below,
+  \at{page}[license], for details.
+\stopdocchapter
 
 \startdocchapter[title=Usage]
 
@@ -33,7 +57,7 @@
     \CONTEXT,
     \PLAIN, and
     \LATEX.
-  If the user interface does not fully conform with the common practise
+  If the user interface does not fully conform with the common practice
   of the latter two, please be lenient toward the author whose
   intuitions are for the most part informed by \CONTEXT.
   For this reason, a couple words concerning the interfaces will be
@@ -159,12 +183,18 @@ To state the obvious, the value of \identifier{day_key} serves as the
 \emph{day key} for encryption. An Enigma day key ordinarily consists of
 (1) a list of the the rotor configuration,
 (2) the ring settings, and
-(3) the plugboard connections.
+(3) the plugboard connections.\footnote{%
+  For a description of the initialization process see
+  \from[initialization].
+}
 Together these have the denotation \emph{day key}, because they are
 meant to be supplied in special code books by central authority, one for
 each day.\footnote{%
   Read about the historical directives for daily key renewal at
-  \from[key_procedure]; also, don’t miss the explanation on Wikipedia:
+  \from[key_procedure].
+  there are some {\sc pdf}s with images of \emph{Kenngruppenbücher} at
+  \from[ecollection], section \emph{Enigma Messages and Keys}.
+  Also, while you’re at it, don’t miss the explanation on Wikipedia:
   \from[wp:day_key].
 }
 In the \modulename{Enigma} setup, the day key starts
@@ -382,7 +412,7 @@ Encryption equals decryption.
 \stopdocchapter
 
 \startdocchapter[title=Metadata]
-\startdocsection[title=License]
+\startdocsection[title=License,reference=license]
 
 © 2012 \emph{Philipp Gesang}. All rights reserved.
 
@@ -430,6 +460,13 @@ conditions are met:
         German military cryptography and Allied cryptanalysis before and
         during the Second World War.\par
         \from[codebook]
+  \item A more detailed account from a historical-cryptological
+        perspective is provided by Ulrich Heinz in his Dissertation (in
+        German), which is freely available.
+        Includes an interesting albeit speculative note on the
+        effectiveness of the Soviet code breaking efforts (chapter
+        seven).\par
+        \from[heinz_diss]
   \item Also, the \modulename{Enigma} module drew lots of inspiration
         from Arno Trautmann’s \modulename{Chickenize} package, which
         remains the unsurpassed hands-on introduction to callback
