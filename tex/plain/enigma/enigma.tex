@@ -9,7 +9,8 @@
 \catcode`\!=11
 %D Nice tool from luat-ini.mkiv. This really helps with those annoying
 %D string separators of Lua’s that clutter the source.
-\def\luastringsep{===} % this permits \typefile{self} otherwise nested b/e sep problems
+% this permits \typefile{self} otherwise nested b/e sep problems
+\def\luastringsep{===}
 \edef\!!bs{[\luastringsep[}
 \edef\!!es{]\luastringsep]}
 %D \startdocsection[title=Prerequisites]
@@ -56,8 +57,9 @@
       local enigma = packagedata.enigma
       local current_args = enigma.parse_args(\!!bs\detokenize{#1}\!!es)
       enigma.save_raw_args(current_args, \!!bs\current_enigma_id\!!es)
-      enigma.new_callback(enigma.new_machine(\!!bs\current_enigma_id\!!es),
-                          \!!bs\current_enigma_id\!!es)
+      enigma.new_callback(
+        enigma.new_machine(\!!bs\current_enigma_id\!!es),
+        \!!bs\current_enigma_id\!!es)
     }%
   \egroup%
 }
@@ -85,10 +87,12 @@
     \endgraf
     \bgroup%
     \directlua{%
-      if packagedata.enigma and packagedata.enigma.machines[ \!!bs#1\!!es] then
-        luatexbase.add_to_callback(\!!bs\c!pre_linebreak_filter\!!es,
-                                   packagedata.enigma.callbacks[ \!!bs#1\!!es],
-                                   \!!bs#1\!!es)
+      if packagedata.enigma                         and
+         packagedata.enigma.machines[ \!!bs#1\!!es] then
+        luatexbase.add_to_callback(
+          \!!bs\c!pre_linebreak_filter\!!es,
+          packagedata.enigma.callbacks[ \!!bs#1\!!es],
+          \!!bs#1\!!es)
       else
         print\!!bs ENIGMA: No machine of that name: #1!\!!es
         os.exit()
@@ -98,7 +102,9 @@
   \@EA\gdef\csname stop\current_enigma_id\endcsname{%
     \endgraf
     \directlua{
-      luatexbase.remove_from_callback(\!!bs\c!pre_linebreak_filter\!!es, \!!bs#1\!!es)
+      luatexbase.remove_from_callback(
+        \!!bs\c!pre_linebreak_filter\!!es,
+        \!!bs#1\!!es)
       packagedata.enigma.machines[ \!!bs#1\!!es]:processed_chars()
     }%
     \egroup%
@@ -118,4 +124,4 @@
 \catcode`\_=8  % \popcatcodes
 \catcode`\!=12 % reserved according to source2e
 \ifenigmaisrunningplain\catcode`\@=12\fi
-% vim:ft=tex:sw=2:ts=2:expandtab:tw=72
+% vim:ft=tex:sw=2:ts=2:expandtab:tw=71

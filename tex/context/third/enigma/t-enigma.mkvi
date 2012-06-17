@@ -41,12 +41,13 @@ thirddata = thirddata or { }
 
 %D \startdocsection[title=Macro Generator]
 %D \startparagraph
-%D The main setup.\reference[listing:define]{} The \texmacro{defineenigma} macro does not adhere to
-%D the reommended practis of automatical macro derivation. Rather, we
-%D have our own parser do the job of setting globals. This is a
-%D consequence of the intention to offer the same behavior in any of the
-%D three main formats, \PLAIN, \CONTEXT and \LATEX. Hence, we don’t rely
-%D on the internal mechanisms but implement our own macro generator.
+%D The main setup.\reference[listing:define]{} The
+%D \texmacro{defineenigma} macro does not adhere to the reommended
+%D practis of automatical macro derivation. Rather, we have our own
+%D parser do the job of setting globals. This is a consequence of the
+%D intention to offer the same behavior in any of the three main
+%D formats, \PLAIN, \CONTEXT and \LATEX. Hence, we don’t rely on the
+%D internal mechanisms but implement our own macro generator.
 %D \stopparagraph
 
 \def\enigma_define_indeed#id{%
@@ -77,10 +78,10 @@ thirddata = thirddata or { }
 }
 
 %D \startparagraph
-%D The \texmacro{enigma_inherit}\reference[listing:inherit]{} is called as
-%D an intermediate step when deriving one machine from an already existing
-%D one. It gets the stored configuration of its ancestor, relying on the
-%D \luafunction{retrieve_raw_args} function (see
+%D The \texmacro{enigma_inherit}\reference[listing:inherit]{} is called
+%D as an intermediate step when deriving one machine from an already
+%D existing one. It gets the stored configuration of its ancestor,
+%D relying on the \luafunction{retrieve_raw_args} function (see
 %D \at{page}[listing:retrieve].
 %D \stopparagraph
 \def\enigma_inherit#to#from{%
@@ -153,4 +154,4 @@ thirddata = thirddata or { }
 %D \stopdocsection
 
 \protect
-% vim:ft=context:sw=2:ts=2:tw=72
+% vim:ft=context:sw=2:ts=2:tw=71

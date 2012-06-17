@@ -1,5 +1,5 @@
 #!/usr/bin/env texlua
-------------------------------------------------------------------------
+-----------------------------------------------------------------------
 --         FILE:  enigma.lua
 --        USAGE:  Call via interface from within a TeX session.
 --  DESCRIPTION:  Enigma logic.
@@ -7,13 +7,13 @@
 --       AUTHOR:  Philipp Gesang (Phg), <megas.kapaneus@gmail.com>
 --      VERSION:  hg tip
 --      CREATED:  2012-02-19 21:44:22+0100
-------------------------------------------------------------------------
+-----------------------------------------------------------------------
 --
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Format Dependent Code]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \startparagraph
 Exported functionality will be collected in the table
@@ -26,22 +26,23 @@ local format_is_context_p = false
 
 --[[ichd--
 \startparagraph
-Afaict, \LATEX\ for \LUATEX\ still lacks a globally accepted namespacing
-convention. This is more than bad, but we’ll have to cope with that. For
-this reason we brazenly introduce \identifier{packagedata} (in analogy
-to \CONTEXT’s \identifier{thirddata}) table as a package namespace
-proposal. If this module is called from a \LATEX\ or plain session, the
-table \identifier{packagedata} will already have been created so we will
+Afaict, \LATEX\ for \LUATEX\ still lacks a globally accepted
+namespacing convention. This is more than bad, but we’ll have to cope
+with that. For this reason we brazenly introduce
+\identifier{packagedata} (in analogy to \CONTEXT’s
+\identifier{thirddata}) table as a package namespace proposal. If this
+module is called from a \LATEX\ or plain session, the table
+\identifier{packagedata} will already have been created so we will
 identify the format according to its presence or absence, respectively.
 \stopparagraph
 --ichd]]--
 
-if packagedata then             -- latex or plain
+if packagedata then            -- latex or plain
   packagedata.enigma = enigma
-elseif thirddata then           -- context
+elseif thirddata then          -- context
   format_is_context_p = true
   thirddata.enigma = enigma
-else                            -- external call, mtx-script or whatever
+else                           -- external call, mtx-script or whatever
   _G.enigma = enigma
 end
 --[[ichd--
@@ -49,9 +50,9 @@ end
 --ichd]]--
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Prerequisites]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
 First of all, we generate local copies of all those library functions
 that are expected to be referenced frequently.
@@ -81,8 +82,10 @@ local noderemove                   = node and node.remove
 local nodeslide                    = node and node.slide
 local nodetraverse                 = node and node.traverse
 local nodetraverse_id              = node and node.traverse_id
-local nodesinstallattributehandler = format_is_context_p and nodes.installattributehandler
-local nodestasksappendaction       = format_is_context_p and nodes.tasks.appendaction
+local nodesinstallattributehandler = format_is_context_p
+                                     and nodes.installattributehandler
+local nodestasksappendaction       = format_is_context_p
+                                     and nodes.tasks.appendaction
 local stringfind                   = string.find
 local stringformat                 = string.format
 local stringlower                  = string.lower
@@ -150,8 +153,8 @@ local P, R, S, V, lpegmatch
 
 --[[ichd--
 \startparagraph
-By default the output to \type{stdout} will be zero. The verbosity level
-can be adjusted in order to alleviate debugging.
+By default the output to \type{stdout} will be zero. The verbosity
+level can be adjusted in order to alleviate debugging.
 \stopparagraph
 --ichd]]--
 --local verbose_level = 42
@@ -171,9 +174,9 @@ local max_msg_length = 250
 
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Globals]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
 The following mappings are used all over the place as we convert back
 and forth between the characters (unicode) and their numerical
@@ -239,8 +242,8 @@ mnemonic.
   end
 
 --[[ichd--
-\placetable[here][listing:reflector]{The three reflectors and their substitution
-                    rules.}{%
+\placetable[here][listing:reflector]%
+  {The three reflectors and their substitution rules.}{%
   \starttabulate[|r|l|]
     \NC UKW a \NC AE BJ CM DZ FL GY HX IV KW NR OQ PU ST \NC \NR
     \NC UKW b \NC AY BR CU DH EQ FS GL IP JX KN MO TZ VW \NC \NR
@@ -276,9 +279,9 @@ end
 --ichd]]--
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Pretty printing for debug purposes]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
 The functions below allow for formatting of the terminal output; they
 have no effect on the workings of the enigma simulator.
@@ -374,7 +377,8 @@ do
     return tableconcat(result)
   end
 
-  local init_announcement = colorize("\n" .. [[Initial position of rotors: ]],
+  local init_announcement
+      = colorize("\n" .. [[Initial position of rotors: ]],
                                      37)
   pprint_init = function (init)
     local result = ""
@@ -477,9 +481,9 @@ do
 
 --[[ichd--
 \startparagraph
-\luafunction{emit} is the main wrapper function for \identifier{stdout}.
-Checks if the global verbosity setting exceeds the specified threshold,
-and only then pushes the output.
+\luafunction{emit} is the main wrapper function for
+\identifier{stdout}.  Checks if the global verbosity setting exceeds
+the specified threshold, and only then pushes the output.
 \stopparagraph
 --ichd]]--
   emit = function (v, f, ...)
@@ -535,12 +539,12 @@ do
 --ichd]]--
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Rotation]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
-The following function \luafunction{do_rotate} increments the rotational
-state of a single rotor. There are two tests for notches:
+The following function \luafunction{do_rotate} increments the
+rotational state of a single rotor. There are two tests for notches:
 \startitemize[n]
   \item whether it’s at the current character, and
   \item whether it’s at the next character.
@@ -586,9 +590,9 @@ has been reached and covers the corner case \emph{double stepping}.
 --ichd]]--
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Input Preprocessing]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startparagraph
 Internally, we will use lowercase strings as they are a lot more
 readable than uppercase. Lowercasing happens prior to any further
@@ -660,11 +664,11 @@ solution is to write out numbers above ten.
 --ichd]]--
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[
   title={Main function chain to be applied to single characters},
 ]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \startparagraph
 As far as the Enigma is concerned, there is no difference between
@@ -684,8 +688,8 @@ each rotor to the letter value (its position on the ingoing end).
 }
 \startparagraph
 The function \luafunction{do_do_encode_char} returns the character
-substitution for one rotor. As a letter passes through each rotor twice,
-the argument \identifier{direction} determines which way the
+substitution for one rotor. As a letter passes through each rotor
+twice, the argument \identifier{direction} determines which way the
 substitution is applied.
 \stopparagraph
 --ichd]]--
@@ -707,12 +711,12 @@ substitution is applied.
 
 --[[ichd--
 \startparagraph
-Behind the plugboard, every character undergoes seven substitutions: two
-for each rotor plus the central one through the reflector. The function
-\luafunction{do_encode_char}, although it returns the final result only,
-keeps every intermediary step inside a table for debugging purposes.
-This may look inefficient but is actually a great advantage whenever
-something goes wrong.
+Behind the plugboard, every character undergoes seven substitutions:
+two for each rotor plus the central one through the reflector. The
+function \luafunction{do_encode_char}, although it returns the final
+result only, keeps every intermediary step inside a table for debugging
+purposes.  This may look inefficient but is actually a great advantage
+whenever something goes wrong.
 \stopparagraph
 --ichd]]--
   --- ra -> rb -> rc -> ukw -> rc -> rb -> ra
@@ -740,8 +744,8 @@ alphabet. Characters that fail this check are, at the moment, returned
 as they were.
 \TODO{Make behaviour of \luafunction{encode_char} in case of invalid
 input configurable.}
-Also, the counter of encoded characters is incremented at this stage and
-some pretty printer hooks reside here.
+Also, the counter of encoded characters is incremented at this stage
+and some pretty printer hooks reside here.
 \stopparagraph
 
 \startparagraph
@@ -760,7 +764,7 @@ local variable, \identifier{pb_char}.
     machine:rotate()
     local pb = machine.plugboard
     char = letter_to_value[char]
-    local pb_char = pb[char]              -- first plugboard substitution
+    local pb_char = pb[char]           -- first plugboard substitution
     emit(2, pprint_step, machine.step, char, pb_char)
     emit(3, pprint_rotor_scheme)
     emit(3, pprint_rotor, machine.rotors[1])
@@ -769,11 +773,12 @@ local variable, \identifier{pb_char}.
     char = do_encode_char(machine.rotors,
                           machine.reflector,
                           pb_char)
-    return value_to_letter[pb[char]]      -- second plugboard substitution
+    return value_to_letter[pb[char]]   -- second plugboard substitution
   end
 
   local get_random_pattern = function ()
-    local a, b, c = mathrandom(1,26), mathrandom(1,26), mathrandom(1,26)
+    local a, b, c
+        = mathrandom(1,26), mathrandom(1,26), mathrandom(1,26)
     return value_to_letter[a]
         .. value_to_letter[b]
         .. value_to_letter[c]
@@ -796,8 +801,8 @@ local variable, \identifier{pb_char}.
 
 --[[ichd--
 \startparagraph
-As the actual encoding proceeds character-wise, the processing of entire
-strings needs to be managed externally. This is where
+As the actual encoding proceeds character-wise, the processing of
+entire strings needs to be managed externally. This is where
 \luafunction{encode_string} comes into play: It handles iteration and
 extraction of successive characters from the sequence.
 \TODO{Make \luafunction{encode_string} preprocess characters.}
@@ -824,9 +829,9 @@ extraction of successive characters from the sequence.
 --ichd]]--
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Initialization string parser]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \placetable[here][]{Initialization strings}{%
   \bTABLE
@@ -877,7 +882,8 @@ extraction of successive characters from the sequence.
                        * V"ring"
                        * (V"whitespace" * V"plugboard")^-1
                        ,
-    reflector          = Cg(C(R("ac","AC")) / stringlower, "reflector"),
+    reflector          = Cg(C(R("ac","AC")) / stringlower, "reflector")
+                       ,
 
     rotors             = Cg(Ct(V"rotor" * V"whitespace"
                              * V"rotor" * V"whitespace"
@@ -929,17 +935,17 @@ extraction of successive characters from the sequence.
 --ichd]]--
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Initialization routines]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \startparagraph
 The plugboard is implemented as a pair of hash tables.
 \stopparagraph
 --ichd]]--
   local get_plugboard_substitution = function (p)
-    -- Plugboard wirings are symmetrical, thus we have one table for each
-    -- direction.
+    --- Plugboard wirings are symmetrical, thus we have one table for
+    --- each direction.
     local tmp, result = { }, { }
     for _, str in next, p do
       local one, two = stringlower(stringsub(str, 1, 1)),
@@ -962,8 +968,8 @@ The plugboard is implemented as a pair of hash tables.
 --[[ichd--
 \startparagraph
 Initialization of the rotors requires some precautions to be taken.
-The most obvious of which is adjusting the displacement of its wiring by
-the ring setting.
+The most obvious of which is adjusting the displacement of its wiring
+by the ring setting.
 \stopparagraph
 \startparagraph
 Another important task is to store the notch position in order for it
@@ -972,20 +978,20 @@ to be retrievable by the rotation subroutine at a later point.
 \startparagraph
 The actual bidirectional mapping is implemented as a pair of tables.
 The initial order of letters, before the ring shift is applied, is
-alphabetical on the input (right, “from”) side and, on the output (left,
-“to”) side taken by the hard wired correspondence as specified in the
-rotor wirings above.
+alphabetical on the input (right, “from”) side and, on the output
+(left, “to”) side taken by the hard wired correspondence as specified
+in the rotor wirings above.
 NB the descriptions in terms of “output” and “input” directions is
 misleading in so far as during any encoding step the electricity will
 pass through every rotor in both ways.
-Hence, the “input” (right, from) direction literally applies only to the
-first half of the encoding process between plugboard and reflector.
+Hence, the “input” (right, from) direction literally applies only to
+the first half of the encoding process between plugboard and reflector.
 \stopparagraph
 \startparagraph
-The function \luafunction{do_get_rotor} creates a single rotor
-instance and populates it with character mappings. The \identifier{from}
-and \identifier{to} subfields of its \identifier{wiring} field represent the
-wiring in the respective directions.
+The function \luafunction{do_get_rotor} creates a single rotor instance
+and populates it with character mappings. The \identifier{from} and
+\identifier{to} subfields of its \identifier{wiring} field represent
+the wiring in the respective directions.
 This initital wiring was specified in the corresponding
 \identifier{raw_rotor_wiring} table; the ringshift is added modulo the
 alphabet size in order to get the correctly initialized rotor.
@@ -1018,8 +1024,8 @@ alphabet size in order to get the correctly initialized rotor.
 Rotors are initialized sequentially accordings to the initialization
 request.
 The function \luafunction{get_rotors} walks over the list of
-initialization instructions and calls \luafunction{do_get_rotor} for the
-actual generation of the rotor table. Each rotor generation request
+initialization instructions and calls \luafunction{do_get_rotor} for
+the actual generation of the rotor table. Each rotor generation request
 consists of three elements:
 \stopparagraph
 \startitemize[n]
@@ -1058,7 +1064,8 @@ character, each one will be encoded successively, yielding a list.
 --ichd]]--
   local encode_general = function (machine, chr)
     local chr = stringlower(chr)
-    local replacement = pp_substitutions[chr] or valid_char_p[chr] and chr
+    local replacement
+        = pp_substitutions[chr] or valid_char_p[chr] and chr
     if not replacement then return false end
 
     if utf8len(replacement) == 1 then
@@ -1137,14 +1144,15 @@ placeholders (“X”) from the encodable spectrum. See above
 The above mentioned preprocessing, however, does not even nearly extend
 to the whole unicode range that modern day typesetting is expected to
 handle. Thus, sooner or later an Enigma machine will encounter
-non-preprocessable characters and it will have to decide what to do with
-them. The Enigma module offers two ways to handle this kind of
+non-preprocessable characters and it will have to decide what to do
+with them. The Enigma module offers two ways to handle this kind of
 situation: \emph{drop} those characters, possibly distorting the
 deciphered plain text, or to leave them in, leaving hints behind as to
-the structure of the encrypted text. None of these is optional, so it is
-nevertheless advisable to not include non-latin characters in the plain
-text in the first place. The settings key \identifier{other_chars} (type
-boolean) determines whether we will keep or drop offending characters.
+the structure of the encrypted text. None of these is optional, so it
+is nevertheless advisable to not include non-latin characters in the
+plain text in the first place. The settings key
+\identifier{other_chars} (type boolean) determines whether we will keep
+or drop offending characters.
 \stopparagraph
 --ichd]]--
 
@@ -1182,11 +1190,12 @@ boolean) determines whether we will keep or drop offending characters.
       decode_char         = decode_char,
       set_state           = set_state,
       processed_chars     = processed_chars,
-      --- <badcodingstyle>
-      __raw               = raw_settings -- hackish but occasionally useful
+      --- <badcodingstyle> -- hackish but occasionally useful
+      __raw               = raw_settings
       --- </badcodingstyle>
     } --- machine
-    local init_state = pattern_to_state(pattern or get_random_pattern())
+    local init_state
+      = pattern_to_state(pattern or get_random_pattern())
     emit(1, pprint_init, init_state)
     machine:set_state(init_state)
 
@@ -1202,9 +1211,9 @@ end
 
 
 --[[ichd--
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \startdocsection[title=Setup Argument Handling]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 --ichd]]--
 do
 --[[ichd--
@@ -1233,7 +1242,11 @@ as all the functionality resides in Lua.
                   ,
     value          = C((V"balanced" + (1 - V"final"))^1),
     final          = V"whitespace"^0 * V"comma" + V"rest_of_string",
-    rest_of_string = V"whitespace"^0 * V"eol_comment"^-1 * V"eol"^0 * V"eof",
+    rest_of_string = V"whitespace"^0
+                   * V"eol_comment"^-1
+                   * V"eol"^0
+                   * V"eof"
+                   ,
     rest_of_line   = V"whitespace"^0 * V"eol_comment"^-1 * V"eol",
     eol_comment    = V"comment_string" * (1 - (V"eol" + V"eof"))^0,
     comment_string = V"lua_comment" + V"TeX_comment",
@@ -1242,11 +1255,16 @@ as all the functionality resides in Lua.
     emptyline      = V"rest_of_line",
 
     balanced       = V"balanced_brk" + V"balanced_brc",
-    balanced_brk   = V"lbrk" * (V"balanced" + (1 - V"rbrk"))^0 * V"rbrk",
-    balanced_brc   = V"lbrc" * (V"balanced" + (1 - V"rbrc"))^0 * V"rbrc",
-
+    balanced_brk   = V"lbrk"
+                   * (V"balanced" + (1 - V"rbrk"))^0
+                   * V"rbrk"
+                   ,
+    balanced_brc   = V"lbrc"
+                   * (V"balanced" + (1 - V"rbrc"))^0
+                   * V"rbrc"
+                   ,
     -- Terminals
-    eol            = P"\n\r" + P"\r\n" + P"\n" + P"\r", -- users do strange things
+    eol            = P"\n\r" + P"\r\n" + P"\n" + P"\r",
     eof            = -P(1),
     whitespace     = S" \t\v",
     equals         = P"=",
@@ -1262,8 +1280,8 @@ as all the functionality resides in Lua.
 --[[ichd--
 \startparagraph
 In the next step we process the arguments, check the input for sanity
-etc. The function \luafunction{parse_args} will test whether a value has
-a sanitizer routine and, if so, apply it to its value.
+etc. The function \luafunction{parse_args} will test whether a value
+has a sanitizer routine and, if so, apply it to its value.
 \stopparagraph
 --ichd]]--
 
@@ -1276,7 +1294,8 @@ a sanitizer routine and, if so, apply it to its value.
     ["true"] = true,
     yes      = true,
   }
-  local toboolean = function (value) return boolean_synonyms[value] or false end
+  local toboolean
+      = function (value) return boolean_synonyms[value] or false end
   local alpha = R("az", "AZ")
   local digit = R"09"
   local space = S" \t\v"
@@ -1360,9 +1379,10 @@ shuffling on the function side.
 \startparagraph
 When grouping output into the traditional blocks of five letters we
 insert space nodes. As their properties depend on the font we need to
-recreate the space item for every paragraph. Also, as \CONTEXT\ does not
-preload a font we lack access to font metrics before \type{\starttext}.
-Thus creating the space earlier will result in an error.
+recreate the space item for every paragraph. Also, as \CONTEXT\ does
+not preload a font we lack access to font metrics before
+\type{\starttext}.  Thus creating the space earlier will result in an
+error.
 The function \luafunction{generate_space} will be called inside the
 callback in order to get an appropriate space glue.
 \stopparagraph
@@ -1382,11 +1402,11 @@ end
 \startparagraph
 \useURL[khaled_hosny_texsx] [http://tex.stackexchange.com/a/11970]
        []                   [tex.sx]
-Registering a callback (“node attribute”?, “node task”?, “task action”?)
-in \CONTEXT\ is not straightforward, let alone documented. The trick is
-to create, install and register a handler first in order to use it later
-on \dots\ many thanks to Khaled Hosny, who posted an answer to
-\from[khaled_hosny_texsx].
+Registering a callback (“node attribute”?, “node task”?, “task
+action”?) in \CONTEXT\ is not straightforward, let alone documented.
+The trick is to create, install and register a handler first in order
+to use it later on \dots\ many thanks to Khaled Hosny, who posted an
+answer to \from[khaled_hosny_texsx].
 \stopparagraph
 --ichd]]--
 
@@ -1396,10 +1416,10 @@ local new_callback = function (machine, name)
   local mod_5 = 0
   local insert_encoded
   --- First we need to choose an insertion method. If autospacing is
-  --- requested, a space will have to be inserted every five characters.
-  --- The rationale behind using differend functions to implement each
-  --- method is that it should be faster than branching for each
-  --- character.
+  --- requested, a space will have to be inserted every five
+  --- characters.  The rationale behind using differend functions to
+  --- implement each method is that it should be faster than branching
+  --- for each character.
   if machine.spacing then -- auto-group output
     insert_encoded = function (head, n, replacement)
       local insertion = nodecopy(n)
@@ -1453,7 +1473,7 @@ local new_callback = function (machine, name)
           end
         end
       elseif nid == GLUE_NODE then
-        if n.subtype ~= 15 then -- keeping the parfillskip is convenient
+        if n.subtype ~= 15 then -- keeping the parfillskip
           noderemove(head, n)
         end
       elseif IGNORE_NODES[nid] then
@@ -1486,7 +1506,8 @@ local new_callback = function (machine, name)
     }
     nodestasksappendaction("processors",
                            --"characters",
-                           -- this one is “for users” (cf. node-tsk.lua)
+                           --- this one is tagged “for users”
+                           --- (cf. node-tsk.lua)
                            "before",
                            "thirddata.enigma.callbacks." .. name)
     nodes.tasks.disableaction("processors",
@@ -1502,10 +1523,11 @@ Enigma\reference[listing:retrieve]{} machines can be copied and derived
 from one another at will, cf.  the \texmacro{defineenigma} on
 \at{page}[listing:define]. Two helper functions residing inside the
 \identifier{thirddata.enigma} namespace take care of these actions:
-\luafunction{save_raw_args} and \luafunction{retrieve_raw_args}. As soon
-as a machine is defined, we store its parsed options inside the table
-\identifier{configurations} for later reference. For further details on
-the machine derivation mechanism see \at{page}[listing:inherit].
+\luafunction{save_raw_args} and \luafunction{retrieve_raw_args}. As
+soon as a machine is defined, we store its parsed options inside the
+table \identifier{configurations} for later reference. For further
+details on the machine derivation mechanism see
+\at{page}[listing:inherit].
 \stopparagraph
 --ichd]]--
 local configurations = { }
@@ -1527,13 +1549,13 @@ enigma.retrieve_raw_args = retrieve_raw_args
 --[[ichd--
 \startparagraph
 The function \luafunction{new_machine} instantiates a table containing
-the complete specification of a workable \emph{Enigma} machine and other
-metadata. The result is intended to be handed over to the callback
-creation mechanism (\luafunction{new_callback}). However, the arguments
-table is usally stored away in the \identifier{thirddata.enigma}
-namespace anyway (\luafunction{save_raw_args}), so that the
-specification of any machine can be inherited by some new setup later
-on.
+the complete specification of a workable \emph{Enigma} machine and
+other metadata. The result is intended to be handed over to the
+callback creation mechanism (\luafunction{new_callback}). However, the
+arguments table is usally stored away in the
+\identifier{thirddata.enigma} namespace anyway
+(\luafunction{save_raw_args}), so that the specification of any machine
+can be inherited by some new setup later on.
 \stopparagraph
 --ichd]]--
 local new_machine = function (name)
@@ -1551,4 +1573,4 @@ enigma.new_callback = new_callback
 \stopdocsection
 --ichd]]--
 
--- vim:ft=lua:sw=2:ts=2:tw=72
+-- vim:ft=lua:sw=2:ts=2:tw=71

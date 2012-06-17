@@ -62,17 +62,17 @@
   intuitions are for the most part informed by \CONTEXT.
   For this reason, a couple words concerning the interfaces will be
   necessary.
-  The examples in this manual will be cycling through all three formats,
-  but once you get the general idea of how it works, you will have no
-  problem translating between coding styles.
+  The examples in this manual will be cycling through all three
+  formats, but once you get the general idea of how it works, you will
+  have no problem translating between coding styles.
   Those familiar with \CONTEXT\ might, therefore, skip the following
   paragraphs and continue directly with the next section on
   \at{page}[sec:opts].%
-  
+
   The package is loaded as usual. For \PLAIN, issue a
   \type{\input{enigma}}.
-  \LATEX-users need to place \type{\usepackage{enigma}} somewhere inside
-  the preamble.
+  \LATEX-users need to place \type{\usepackage{enigma}} somewhere
+  inside the preamble.
   (There are no package options.)
   From this point on, instructions for both formats are the same.
 
@@ -80,9 +80,10 @@
   will be derived:
     \texmacro{defineenigma} and \texmacro{setupenigma}.
   Both are a kind of \emph{meta-macros}, meaning that they generate
-  other macros which may then be employed to access the functionality of
-  the package.
-  As such they naturally belong inside the preamble (if you chose to use
+  other macros which may then be employed to access the functionality
+  of the package.
+  As such they naturally belong inside the preamble (if you chose to
+  use
   \modulename{Enigma} with \LATEX, that is).
   It follows that the correct and only meaningful order is to
   \texmacro{defineenigma} an enigma machine first and then
@@ -99,8 +100,8 @@
     have to process entire paragraphs.
     As encrypted passages are supposed to stand on their own, this
     small limitation should not have a severe impact on functionality.
-    If you should, however, need a macro that works for smaller portions
-    of text, please send a feature request to the maintainer
+    If you should, however, need a macro that works for smaller
+    portions of text, please send a feature request to the maintainer
     (\ichdparameter{email}).
   }
   However, these are not usable right away, as we still have to set the
@@ -114,10 +115,10 @@
   examples of their effects will be given further below in the section
   on functionality (see \at{page}[sec:fun]).%
   \footnote{%
-    If you grasp the concept of paired \type{\define<foo>} \endash\space
-    \type{\setup<foo>} macros, then congratulations are in order:
-    you qualify for migration from your current macro package to
-    \CONTEXT.
+    If you grasp the concept of paired \type{\define<foo>}
+    \endash\space \type{\setup<foo>} macros, then congratulations are
+    in order: you qualify for migration from your current macro package
+    to \CONTEXT.
   }
 \stopdocsection
 \startdocsection[title=Options Explained,reference=sec:opts]
@@ -144,7 +145,7 @@ the following parameters.
       %% Usage ················ %%
       \startencryption
         aaaaa aaaaa aaaaa
-        aaaaa aaaaa aaaaa 
+        aaaaa aaaaa aaaaa
       \stopencryption
       \startencryption
         Nobody in Poland is going
@@ -168,16 +169,17 @@ the following parameters.
     <\emph{#2}>%
     \hskip1em%
   }
-  \item{other_chars}{boolean} How to handle non-encodable characters, i.\,e.
-    glyphs outside the bare set of Latin letters; see below on
+  \item{other_chars}{boolean} How to handle non-encodable characters,
+    i.\,e.  glyphs outside the bare set of Latin letters; see below on
     \at{page}[explained:other_chars].
-  \item{day_key}{string} Encryption key, i.\,e. a description of the initial
-    setup of an Enigma machine: the reflector used, the choice and
-    positions of the three rotors, the ring settings, and the plugboard
-    wiring.
+  \item{day_key}{string} Encryption key, i.\,e. a description of the
+    initial setup of an Enigma machine: the reflector used, the choice
+    and positions of the three rotors, the ring settings, and the
+    plugboard wiring.
   \item{rotor_setting}{string} The initial rotor advancement.
   \item{spacing}{boolean} Auto-space output?
-  \item{verbose}{integer} Controls overall verbosity level (\emph{global}!).
+  \item{verbose}{integer} Controls overall verbosity level
+    (\emph{global}\/!).
 \stopitemize
 
 %% day key
@@ -190,8 +192,8 @@ To state the obvious, the value of \identifier{day_key} serves as the
   \from[initialization].
 }
 Together these have the denotation \emph{day key}, because they are
-meant to be supplied in special code books by central authority, one for
-each day.\footnote{%
+meant to be supplied in special code books by central authority, one
+for each day.\footnote{%
   Read about the historical directives for daily key renewal at
   \from[key_procedure].
   there are some {\sc pdf}s with images of \emph{Kenngruppenbücher} at
@@ -221,15 +223,16 @@ of this section is entirely optional.
 Also part of the \identifier{day_key}, but not mentioned yet, is the
 choice of the \emph{reflector}.
 It may be specified as one of the three letters \type{A}, \type{B} and
-\type{C} as the first item. If no reflector is requested explicitly, the
-machine defaults to \type{B}, which is actually the only one of the
+\type{C} as the first item. If no reflector is requested explicitly,
+the machine defaults to \type{B}, which is actually the only one of the
 three models that had been in widespread use
 (see below on \at{page}[listing:reflector] for the wirings).
 
 Initialization is not complete without a \identifier{rotor_setting}.
-This is a triple of letters, each representing the initial state of
-one rotor (e.\,g. \type{fkd}). Historically this was not part of the day
-key but supposed to be chosen at random by the operating signal officer.
+This is a triple of letters, each representing the initial state of one
+rotor (e.\,g. \type{fkd}). Historically this was not part of the day
+key but supposed to be chosen at random by the operating signal
+officer.
 
 The output can be automatically grouped into sequences of five
 characters, delimited by spaces. This does not only conform with
@@ -237,21 +240,22 @@ traditional crypto-style, but also allows for the resulting text to be
 sanely broken into lines by \TEX.
 
 %%% other_chars
-% The option \identifier{other_chars} determines how the machine -- in our
-% Unicode-aware times -- should behave when it encounters a non-Latin
-% letter. For the time being it can either remove them from the input
-% (value \emph{no}) or pass them through unmodified (\emph{yes}). Note
-% that this is independent of the \emph{preprocessing} of characters like
-% punctuation and umlauts, which is done automatically.
+% The option \identifier{other_chars} determines how the machine -- in
+% our Unicode-aware times -- should behave when it encounters a
+% non-Latin letter. For the time being it can either remove them from
+% the input (value \emph{no}) or pass them through unmodified
+% (\emph{yes}). Note that this is independent of the
+% \emph{preprocessing} of characters like punctuation and umlauts,
+% which is done automatically.
 % (See below \at{page}[listing:preproc] for the internal substitution
 % list.)
 
-Most documents don’t naturally adhere to the machine-imposed restriction
-to the 26 letters of the Latin alphabet. The original encipherment
-directives comprised substitution tables to compensate for a set of
-intrinsic peculiarities of the German language, like umlauts and common
-digraphs.  The \modulename{Enigma} simulation module strives to apply
-these automatically but there is no guarantee of completeness.
+Most documents don’t naturally adhere to the machine-imposed
+restriction to the 26 letters of the Latin alphabet. The original
+encipherment directives comprised substitution tables to compensate for
+a set of intrinsic peculiarities of the German language, like umlauts
+and common digraphs.  The \modulename{Enigma} simulation module strives
+to apply these automatically but there is no guarantee of completeness.
 
 However,\reference[explained:other_chars]{} the Enigma lacks means of
 handling languages other than German.  When the substitution lookup
@@ -262,8 +266,8 @@ intends to keep these foreign characters instead, E can achieve this by
 setting the \identifier{other_chars} key in the \modulename{Enigma}
 setup to the value \emph{true}. An example of how the result of both
 methods may look, other things being equal, is given in below listing
-(example for \CONTEXT; see the file \type{enigma-example-context.tex} in
-the \type{doc/} subtree of your installation path).
+(example for \CONTEXT; see the file \type{enigma-example-context.tex}
+in the \type{doc/} subtree of your installation path).
 
 \startcontexttyping
 \usemodule [enigma]
@@ -341,8 +345,8 @@ encryption and that spaces are omitted.
 \useURL[kgbuch] [http://de.wikipedia.org/wiki/Kenngruppenbuch]
        []       [code book]
 Now it’s certainly not wise to carry around the key to encrypted
-documents as plain text within those documents. The keys will have to be
-distributed via an independent channel, e.\,g. a \from[kgbuch].
+documents as plain text within those documents. The keys will have to
+be distributed via an independent channel, e.\,g. a \from[kgbuch].
 Keys in general don’t have to be supplied inside the document. If there
 is none specified, the module will interrupt the \TEX\ run and
 \emph{ask} for user input. Suppose Alice wanted to send an encrypted
@@ -356,8 +360,8 @@ mtxrun --script mtx-t-enigma                                    \
         --text="I have nothing to hide. From the NSA, that is."
 \stoptyping
 
-Alice would then include the result of this line in her \LATEX\ document
-as follows:
+Alice would then include the result of this line in her \LATEX\
+document as follows:
 
 \startlatextyping
 \documentclass{scrartcl}
@@ -461,11 +465,11 @@ conditions are met:
 
 \startdocsection[title=Acknowledgements]
 \startcredits
-  \item The idea to implement the \emph{Enigma} cipher for \TEX\ came up
-        while I was reading \emph{The Code Book} by Simon Singh.
+  \item The idea to implement the \emph{Enigma} cipher for \TEX\ came
+        up while I was reading \emph{The Code Book} by Simon Singh.
         This work contains an excellent portrayal of the history of
-        German military cryptography and Allied cryptanalysis before and
-        during the Second World War.\par
+        German military cryptography and Allied cryptanalysis before
+        and during the Second World War.\par
         \from[codebook]
   \item A more detailed account from a historical-cryptological
         perspective is provided by Ulrich Heinz in his Dissertation (in
