@@ -1153,9 +1153,10 @@ boolean) determines whether we will keep or drop offending characters.
     local raw_settings = handle_day_key(setup_string, name)
     local rotors, ring =
       get_rotors(raw_settings.rotors, raw_settings.ring)
-    local plugboard = raw_settings.plugboard
-                  and get_plugboard_substitution(raw_settings.plugboard)
-                  or get_plugboard_substitution{ }
+    local plugboard
+        = raw_settings.plugboard
+          and get_plugboard_substitution(raw_settings.plugboard)
+          or  get_plugboard_substitution{ }
     local machine = {
       name                = name,
       step                = 0, -- n characters encoded
@@ -1167,6 +1168,7 @@ boolean) determines whether we will keep or drop offending characters.
       ring                = ring,
       state               = init_state,
       other_chars         = args.other_chars,
+      spacing             = args.spacing,
       ---> a>1, b>2, c>3
       reflector           = letter_to_value[raw_settings.reflector],
       plugboard           = plugboard,
@@ -1183,7 +1185,7 @@ boolean) determines whether we will keep or drop offending characters.
       --- <badcodingstyle>
       __raw               = raw_settings -- hackish but occasionally useful
       --- </badcodingstyle>
-    }
+    } --- machine
     local init_state = pattern_to_state(pattern or get_random_pattern())
     emit(1, pprint_init, init_state)
     machine:set_state(init_state)
@@ -1297,6 +1299,7 @@ a sanitizer routine and, if so, apply it to its value.
 
   local sanitizers = {
     other_chars   = toboolean,          -- true = keep, false = drop
+    spacing       = toboolean,
     day_key       = alphanum_or_space,
     rotor_setting = ensure_alpha,
     verbose       = ensure_int,
@@ -1391,21 +1394,39 @@ local new_callback = function (machine, name)
   enigma.machines [name] = machine
   local space_node
   local mod_5 = 0
-  local insert_with_spacing = function (head, n, replacement)
-    local insertion = nodecopy(n)
-    if replacement then -- inefficient but bulletproof
-      insertion.char = utf8byte(replacement)
-      --print(utf8char(n.char), "=>", utf8char(insertion.char))
+  local insert_encoded
+  --- First we need to choose an insertion method. If autospacing is
+  --- requested, a space will have to be inserted every five characters.
+  --- The rationale behind using differend functions to implement each
+  --- method is that it should be faster than branching for each
+  --- character.
+  if machine.spacing then -- auto-group output
+    insert_encoded = function (head, n, replacement)
+      local insertion = nodecopy(n)
+      if replacement then -- inefficient but bulletproof
+        insertion.char = utf8byte(replacement)
+        --print(utf8char(n.char), "=>", utf8char(insertion.char))
+      end
+      nodeinsert_before(head, n, insertion)
+      mod_5 = mod_5 + 1
+      if mod_5 >= 5 then
+        mod_5 = 0
+        nodeinsert_after(head, insertion, nodecopy(space_node))
+      end
+      noderemove(head, n)
     end
-    nodeinsert_before(head, n, insertion)
-    mod_5 = mod_5 + 1
-    if mod_5 >= 5 then
-      mod_5 = 0
-      nodeinsert_after(head, insertion, nodecopy(space_node))
+  else
+    insert_encoded = function (head, n, replacement)
+      local insertion = nodecopy(n)
+      if replacement then -- inefficient but bulletproof
+        insertion.char = utf8byte(replacement)
+      end
+      nodeinsert_before(head, n, insertion)
+      noderemove(head, n)
     end
-    noderemove(head, n)
   end
   local format_is_context_p = format_is_context_p
+  --- The callback proper starts here.
   local cbk = function (a, _, c)
     space_node = generate_space ()
     local head = format_is_context_p and c or a
@@ -1420,15 +1441,15 @@ local new_callback = function (machine, name)
         --if replacement == false then
         if not replacement then
           if machine.other_chars then
-            insert_with_spacing(head, n, nil)
+            insert_encoded(head, n, nil)
           else
             noderemove(head, n)
           end
         elseif treplacement == "string" then
-          insert_with_spacing(head, n, replacement)
+          insert_encoded(head, n, replacement)
         elseif treplacement == "table" then
           for i=1, #replacement do
-            insert_with_spacing(head, n, replacement)
+            insert_encoded(head, n, replacement)
           end
         end
       elseif nid == GLUE_NODE then
@@ -1444,8 +1465,8 @@ local new_callback = function (machine, name)
         if npre and npost then
           local replacement_pre  = machine:encode(utf8char(npre.char))
           local replacement_post = machine:encode(utf8char(npost.char))
-          insert_with_spacing(head,  npre, replacement_pre)
-          insert_with_spacing(head, npost, replacement_post)
+          insert_encoded(head,  npre, replacement_pre)
+          insert_encoded(head, npost, replacement_post)
         end
         noderemove(head, n)
       --else

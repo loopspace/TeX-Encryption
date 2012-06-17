@@ -138,6 +138,7 @@ the following parameters.
         day_key = I II III
                   01 01 01,
         rotor_setting = aaa,
+        spacing = yes,
         verbose = 1,
       }
       %% Usage ················ %%
@@ -175,6 +176,7 @@ the following parameters.
     positions of the three rotors, the ring settings, and the plugboard
     wiring.
   \item{rotor_setting}{string} The initial rotor advancement.
+  \item{spacing}{boolean} Auto-space output?
   \item{verbose}{integer} Controls overall verbosity level (\emph{global}!).
 \stopitemize
 
@@ -228,6 +230,11 @@ Initialization is not complete without a \identifier{rotor_setting}.
 This is a triple of letters, each representing the initial state of
 one rotor (e.\,g. \type{fkd}). Historically this was not part of the day
 key but supposed to be chosen at random by the operating signal officer.
+
+The output can be automatically grouped into sequences of five
+characters, delimited by spaces. This does not only conform with
+traditional crypto-style, but also allows for the resulting text to be
+sanely broken into lines by \TEX.
 
 %%% other_chars
 % The option \identifier{other_chars} determines how the machine -- in our
