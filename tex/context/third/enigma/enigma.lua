@@ -1460,7 +1460,6 @@ local new_callback = function (machine, name)
     for n in nodetraverse(head) do
       local nid = n.id
       --print(utf8char(n.char), n)
-      print(n, (nid == GLYPH_NODE and utf8char(n.char) or false))
       if nid == GLYPH_NODE then
         local chr         = utf8char(n.char)
         --print(chr, n)
@@ -1520,14 +1519,14 @@ local new_callback = function (machine, name)
       namespace = thirddata.enigma,
       processor = cbk,
     }
+    local cbk_location = "thirddata.enigma.callbacks." .. name
     nodestasksappendaction("processors",
                            --"characters",
                            --- this one is tagged “for users”
                            --- (cf. node-tsk.lua)
                            "before",
-                           "thirddata.enigma.callbacks." .. name)
-    nodestasksdisableaction("processors",
-                            "thirddata.enigma.callbacks." .. name)
+                           cbk_location)
+    nodestasksdisableaction("processors", cbk_location)
   else
     enigma.callbacks[name] = cbk
   end
