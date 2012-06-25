@@ -22,7 +22,7 @@ Exported functionality will be collected in the table
 --ichd]]--
 
 local enigma = { machines = { }, callbacks = { } }
-local format_is_context_p = false
+local format_is_context = false
 
 --[[ichd--
 \startparagraph
@@ -40,7 +40,7 @@ identify the format according to its presence or absence, respectively.
 if packagedata then            -- latex or plain
   packagedata.enigma = enigma
 elseif thirddata then          -- context
-  format_is_context_p = true
+  format_is_context = true
   thirddata.enigma = enigma
 else                           -- external call, mtx-script or whatever
   _G.enigma = enigma
@@ -82,10 +82,14 @@ local noderemove                   = node and node.remove
 local nodeslide                    = node and node.slide
 local nodetraverse                 = node and node.traverse
 local nodetraverse_id              = node and node.traverse_id
-local nodesinstallattributehandler = format_is_context_p
-                                     and nodes.installattributehandler
-local nodestasksappendaction       = format_is_context_p
-                                     and nodes.tasks.appendaction
+local nodesinstallattributehandler
+local nodestasksappendaction
+local nodestasksdisableaction
+if format_is_context then
+  nodesinstallattributehandler = nodes.installattributehandler
+  nodestasksappendaction       = nodes.tasks.appendaction
+  nodestasksdisableaction      = nodes.tasks.disableaction
+end
 local stringfind                   = string.find
 local stringformat                 = string.format
 local stringlower                  = string.lower
@@ -104,7 +108,7 @@ local utfcharacters                = string.utfcharacters
 --table.print = function (...) print(table.serialize(...)) end
 
 local tablecopy
-if format_is_context_p then
+if format_is_context then
   tablecopy = table.copy
 else -- could use lualibs instead but not worth the overhead
   tablecopy = function (t) -- ignores tables as keys
@@ -1447,14 +1451,16 @@ local new_callback = function (machine, name)
       return insertion
     end
   end
-  local format_is_context_p = format_is_context_p
+  local format_is_context = format_is_context
   --- The callback proper starts here.
   local cbk = function (a, _, c)
     space_node = generate_space ()
-    local head = format_is_context_p and c or a
+    local head = format_is_context and c or a
     mod_5 = 0
     for n in nodetraverse(head) do
       local nid = n.id
+      --print(utf8char(n.char), n)
+      print(n, (nid == GLYPH_NODE and utf8char(n.char) or false))
       if nid == GLYPH_NODE then
         local chr         = utf8char(n.char)
         --print(chr, n)
@@ -1507,7 +1513,7 @@ local new_callback = function (machine, name)
     nodeslide(head)
     return head
   end
-  if format_is_context_p then
+  if format_is_context then
     local cbk_id = "enigma_" .. name
     enigma.callbacks[name] = nodesinstallattributehandler{
       name      = cbk_id,
@@ -1520,8 +1526,8 @@ local new_callback = function (machine, name)
                            --- (cf. node-tsk.lua)
                            "before",
                            "thirddata.enigma.callbacks." .. name)
-    nodes.tasks.disableaction("processors",
-                              "thirddata.enigma.callbacks." .. name)
+    nodestasksdisableaction("processors",
+                            "thirddata.enigma.callbacks." .. name)
   else
     enigma.callbacks[name] = cbk
   end
