@@ -652,7 +652,7 @@ solution is to write out numbers above ten.
     ["2"]  = "zwei",
     ["3"]  = "drei",
     ["4"]  = "vier",
-    ["5"]  = "fünf",
+    ["5"]  = "fuenf",
     ["6"]  = "sechs",
     ["7"]  = "sieben",
     ["8"]  = "acht",
@@ -1423,20 +1423,18 @@ local new_callback = function (machine, name)
   if machine.spacing then -- auto-group output
     insert_encoded = function (head, n, replacement)
       local insertion = nodecopy(n)
-      local current_node = insertion -- needed for multi replacements
       if replacement then -- inefficient but bulletproof
         insertion.char = utf8byte(replacement)
         --print(utf8char(n.char), "=>", utf8char(insertion.char))
       end
       nodeinsert_before(head, n, insertion)
       mod_5 = mod_5 + 1
-      if mod_5 >= 5 then
-        mod_5 = 0
-        current_node = nodecopy(space_node)
-        nodeinsert_after(head, insertion, nodecopy(current_node))
+      if mod_5 > 5 then
+        mod_5 = 1
+        nodeinsert_before(head, insertion, nodecopy(space_node))
       end
       noderemove(head, n)
-      return current_node -- so we know where to insert
+      return insertion -- so we know where to insert
     end
   else
     insert_encoded = function (head, n, replacement)
