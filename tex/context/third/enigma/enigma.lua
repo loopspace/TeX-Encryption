@@ -1423,6 +1423,7 @@ local new_callback = function (machine, name)
   if machine.spacing then -- auto-group output
     insert_encoded = function (head, n, replacement)
       local insertion = nodecopy(n)
+      local current_node = insertion -- needed for multi replacements
       if replacement then -- inefficient but bulletproof
         insertion.char = utf8byte(replacement)
         --print(utf8char(n.char), "=>", utf8char(insertion.char))
@@ -1431,9 +1432,11 @@ local new_callback = function (machine, name)
       mod_5 = mod_5 + 1
       if mod_5 >= 5 then
         mod_5 = 0
-        nodeinsert_after(head, insertion, nodecopy(space_node))
+        current_node = nodecopy(space_node)
+        nodeinsert_after(head, insertion, nodecopy(current_node))
       end
       noderemove(head, n)
+      return current_node -- so we know where to insert
     end
   else
     insert_encoded = function (head, n, replacement)
@@ -1443,6 +1446,7 @@ local new_callback = function (machine, name)
       end
       nodeinsert_before(head, n, insertion)
       noderemove(head, n)
+      return insertion
     end
   end
   local format_is_context_p = format_is_context_p
@@ -1468,8 +1472,9 @@ local new_callback = function (machine, name)
         elseif treplacement == "string" then
           insert_encoded(head, n, replacement)
         elseif treplacement == "table" then
+          local current = n
           for i=1, #replacement do
-            insert_encoded(head, n, replacement)
+            current = insert_encoded(head, current, replacement[i])
           end
         end
       elseif nid == GLUE_NODE then
@@ -1482,11 +1487,18 @@ local new_callback = function (machine, name)
       elseif nid == DISC_NODE then
         --- ligatures need to be resolved if they are characters
         local npre, npost = n.pre, n.post
-        if npre and npost then
-          local replacement_pre  = machine:encode(utf8char(npre.char))
-          local replacement_post = machine:encode(utf8char(npost.char))
-          insert_encoded(head,  npre, replacement_pre)
-          insert_encoded(head, npost, replacement_post)
+        if nodeid(npre)  == GLYPH_NODE and
+           nodeid(npost) == GLYPH_NODE then
+          if npre.char and npost.char then -- ligature between glyphs
+            local replacement_pre  = machine:encode(utf8char(npre.char))
+            local replacement_post = machine:encode(utf8char(npost.char))
+            insert_encoded(head,  npre, replacement_pre)
+            insert_encoded(head, npost, replacement_post)
+          else -- hlists or whatever
+            -- pass
+            --noderemove(head, npre)
+            --noderemove(head, npost)
+          end
         end
         noderemove(head, n)
       --else
