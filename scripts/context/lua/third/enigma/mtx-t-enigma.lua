@@ -5,16 +5,18 @@
 --  DESCRIPTION:  context script interface for the Enigma module
 -- REQUIREMENTS:  latest ConTeXt MkIV
 --       AUTHOR:  Philipp Gesang (Phg), <gesang@stud.uni-heidelberg.de>
---      CREATED:  2012-02-25 10:45:39+0100
+--      CREATED:  2013-03-28 02:14:05+0100
 --------------------------------------------------------------------------------
 --
 
 environment.loadluafile("enigma")
 
+local iowrite = io.write
+
 local helpinfo = [[
 ===============================================================
     The Enigma module, command line interface.
-    © 2012 Philipp Gesang. License: 2-clause BSD.
+    © 2012--2013 Philipp Gesang. License: 2-clause BSD.
     Home: <https://bitbucket.org/phg/enigma/>
 ===============================================================
 
@@ -34,7 +36,7 @@ USAGE:
 
 local application = logs.application {
     name     = "mtx-t-enigma",
-    banner   = "The Enigma for ConTeXt, hg-rev 9+",
+    banner   = "The Enigma for ConTeXt, hg-rev 37+",
     helpinfo = helpinfo,
 }
 
@@ -44,7 +46,7 @@ local setup, text = ea"setup" or ea"s",  ea"text" or ea"t"
 local verbose     = ea"verbose" or ea"v"
 
 local out = function (str)
-  io.write(str)
+  iowrite(str)
 end
 
 local machine_id = "external"
@@ -52,7 +54,7 @@ if setup and text then
   local args    = enigma.parse_args(setup)
   if not args then
     application.help()
-    io.write"\n\n[Error] Could not process enigma setup!\n\n"
+    iowrite"\n\n[Error] Could not process enigma setup!\n\n"
   end
   enigma.save_raw_args(args, machine_id)
   --local machine = enigma.new_machine(enigma.parse_args(setup))

@@ -4,9 +4,9 @@
 --        USAGE:  Call via interface from within a TeX session.
 --  DESCRIPTION:  Enigma logic.
 -- REQUIREMENTS:  LuaTeX capable format (Luaplain, ConTeXt).
---       AUTHOR:  Philipp Gesang (Phg), <megas.kapaneus@gmail.com>
---      VERSION:  hg tip
---      CREATED:  2012-02-19 21:44:22+0100
+--       AUTHOR:  Philipp Gesang (Phg), <phg42 dot 2a at gmail dot com>
+--      VERSION:  release
+--      CREATED:  2013-03-28 02:12:03+0100
 -----------------------------------------------------------------------
 --
 
@@ -41,9 +41,9 @@ if packagedata then            -- latex or plain
   packagedata.enigma = enigma
 elseif thirddata then          -- context
   format_is_context = true
-  thirddata.enigma = enigma
+  thirddata.enigma  = enigma
 else                           -- external call, mtx-script or whatever
-  _G.enigma = enigma
+  _ENV.enigma = enigma
 end
 --[[ichd--
 \stopdocsection
@@ -97,6 +97,7 @@ local stringsub                    = string.sub
 local stringupper                  = string.upper
 local tableconcat                  = table.concat
 local tonumber                     = tonumber
+local type                         = type
 local utf8byte                     = unicode.utf8.byte
 local utf8char                     = unicode.utf8.char
 local utf8len                      = unicode.utf8.len
@@ -1392,7 +1393,7 @@ callback in order to get an appropriate space glue.
 \stopparagraph
 --ichd]]--
 
-local generate_space = function ()
+local generate_space = function ( )
   local current_fontparms = font.getfont(font.current()).parameters
   local space_node        = nodenew(GLUE_NODE)
   space_node.spec         = nodenew(GLUE_SPEC_NODE)
@@ -1416,9 +1417,10 @@ answer to \from[khaled_hosny_texsx].
 
 local new_callback = function (machine, name)
   enigma.machines [name] = machine
-  local space_node
+  local current_space_node
   local mod_5 = 0
   local insert_encoded
+
   --- First we need to choose an insertion method. If autospacing is
   --- requested, a space will have to be inserted every five
   --- characters.  The rationale behind using differend functions to
@@ -1435,7 +1437,7 @@ local new_callback = function (machine, name)
       mod_5 = mod_5 + 1
       if mod_5 > 5 then
         mod_5 = 1
-        nodeinsert_before(head, insertion, nodecopy(space_node))
+        nodeinsert_before(head, insertion, nodecopy(current_space_node))
       end
       noderemove(head, n)
       return insertion -- so we know where to insert
@@ -1451,11 +1453,16 @@ local new_callback = function (machine, name)
       return insertion
     end
   end
+
   local format_is_context = format_is_context
   --- The callback proper starts here.
   local cbk = function (a, _, c)
-    space_node = generate_space ()
-    local head = format_is_context and c or a
+    current_space_node = generate_space ()
+    if format_is_context == true then
+      head = c
+    else
+      head = a
+    end
     mod_5 = 0
     for n in nodetraverse(head) do
       local nid = n.id
@@ -1511,7 +1518,8 @@ local new_callback = function (machine, name)
     end
     nodeslide(head)
     return head
-  end
+  end -- callback
+
   if format_is_context then
     local cbk_id = "enigma_" .. name
     enigma.callbacks[name] = nodesinstallattributehandler{
@@ -1522,6 +1530,7 @@ local new_callback = function (machine, name)
     local cbk_location = "thirddata.enigma.callbacks." .. name
     nodestasksappendaction("processors",
                            --"characters",
+                           --"finalizers",
                            --- this one is tagged “for users”
                            --- (cf. node-tsk.lua)
                            "before",
@@ -1546,6 +1555,7 @@ details on the machine derivation mechanism see
 \stopparagraph
 --ichd]]--
 local configurations = { }
+
 local save_raw_args = function (conf, name)
   local current = configurations[name] or { }
   for k, v in next, conf do
@@ -1553,10 +1563,12 @@ local save_raw_args = function (conf, name)
   end
   configurations[name] = current
 end
+
 local retrieve_raw_args = function (name)
   local cn = configurations[name]
   return cn and tablecopy(cn) or { }
 end
+
 enigma.save_raw_args     = save_raw_args
 enigma.retrieve_raw_args = retrieve_raw_args
 
