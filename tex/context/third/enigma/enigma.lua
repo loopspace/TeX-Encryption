@@ -77,6 +77,7 @@ local nodecopy                     = node and node.copy
 local nodeid                       = node and node.id
 local nodeinsert_before            = node and node.insert_before
 local nodeinsert_after             = node and node.insert_after
+local nodelength                   = node and node.length
 local nodenew                      = node and node.new
 local noderemove                   = node and node.remove
 local nodeslide                    = node and node.slide
@@ -1419,47 +1420,75 @@ answer to \from[khaled_hosny_texsx].
 
 local new_callback = function (machine, name)
   enigma.machines [name] = machine
+  local format_is_context = format_is_context
   local current_space_node
   local mod_5 = 0
-  local insert_encoded
 
   --- First we need to choose an insertion method. If autospacing is
   --- requested, a space will have to be inserted every five
   --- characters.  The rationale behind using differend functions to
   --- implement each method is that it should be faster than branching
   --- for each character.
+  local insert_encoded
+
   if machine.spacing then -- auto-group output
     insert_encoded = function (head, n, replacement)
-      local insertion = nodecopy(n)
+      local insert_glyph = nodecopy(n)
       if replacement then -- inefficient but bulletproof
-        insertion.char = utf8byte(replacement)
+        insert_glyph.char = utf8byte(replacement)
         --print(utf8char(n.char), "=>", utf8char(insertion.char))
       end
-      nodeinsert_before(head, n, insertion)
+      --- if we insert a space we need to return the
+      --- glyph node in order to track positions when
+      --- replacing multiple nodes at once (e.g. ligatures)
+      local insertion  = insert_glyph
       mod_5 = mod_5 + 1
       if mod_5 > 5 then
         mod_5 = 1
-        nodeinsert_before(head, insertion, nodecopy(current_space_node))
+        insertion = nodecopy(current_space_node)
+        insertion.next, insert_glyph.prev = insert_glyph, insertion
       end
-      noderemove(head, n)
-      return insertion -- so we know where to insert
+      if head == n then --> replace head
+        local succ = head.next
+        if succ then
+          insert_glyph.next, succ.prev = succ, insert_glyph
+        end
+        head = insertion
+      else --> replace n
+        local pred, succ = n.prev, n.next
+        pred.next, insertion.prev = insertion, pred
+        if succ then
+          insert_glyph.next, succ.prev = succ, insert_glyph
+        end
+      end
+
+      --- insertion becomes the new head
+      return head, insert_glyph -- so we know where to insert
     end
   else
+
     insert_encoded = function (head, n, replacement)
       local insertion = nodecopy(n)
-      if replacement then -- inefficient but bulletproof
+      if replacement then
         insertion.char = utf8byte(replacement)
       end
-      nodeinsert_before(head, n, insertion)
-      noderemove(head, n)
-      return insertion
+      if head == n then
+        local succ = head.next
+        if succ then
+          insertion.next, succ.prev = succ, insertion
+        end
+        head = insertion
+      else
+        nodeinsert_before(head, n, insertion)
+        noderemove(head, n)
+      end
+      return head, insertion
     end
   end
 
-  local format_is_context = format_is_context
   --- The callback proper starts here.
   local aux aux = function (head, recurse)
-    if recurse then print ("recurse depth:", recurse) end
+    if recurse == nil then recurse = 0 end
     for n in nodetraverse(head) do
       local nid = n.id
       --print(utf8char(n.char), n)
@@ -1467,6 +1496,7 @@ local new_callback = function (machine, name)
         local chr         = utf8char(n.char)
         --print(chr, n)
         local replacement  = machine:encode(chr)
+        --print(chr, replacement, n)
         local treplacement = replacement and type(replacement)
         --if replacement == false then
         if not replacement then
@@ -1476,11 +1506,12 @@ local new_callback = function (machine, name)
             noderemove(head, n)
           end
         elseif treplacement == "string" then
-          insert_encoded(head, n, replacement)
+          --print(head, n, replacement)
+          head, _ = insert_encoded(head, n, replacement)
         elseif treplacement == "table" then
           local current = n
           for i=1, #replacement do
-            current = insert_encoded(head, current, replacement[i])
+            head, current = insert_encoded(head, current, replacement[i])
           end
         end
       elseif nid == GLUE_NODE then
@@ -1507,10 +1538,10 @@ local new_callback = function (machine, name)
           end
         end
         noderemove(head, n)
---      elseif nid == HLIST_NODE then
---        print(nid, n)
---        print"going down ... <<<<<<"
---        -- descend
+      elseif nid == HLIST_NODE then
+        if nodelength(n.list) > 0 then
+          n.list = aux(n.list, recurse + 1)
+        end
 --      else
 --        -- TODO other node types
 --        print(n)
