@@ -1542,7 +1542,7 @@ local new_callback = function (machine, name)
           end
         end
         noderemove(head, n)
-      elseif nid == HLIST_NODE then
+      elseif nid == HLIST_NODE or nid == VLIST_NODE then
         if nodelength(n.list) > 0 then
           n.list = aux(n.list, recurse + 1)
         end

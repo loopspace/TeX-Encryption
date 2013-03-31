@@ -85,15 +85,14 @@
   As such they naturally belong inside the preamble (if you chose to
   use
   \modulename{Enigma} with \LATEX, that is).
-  It follows that the correct and only meaningful order is to
-  \texmacro{defineenigma} an enigma machine first and then
-  \texmacro{setupenigma} it.
-  The former takes a single, the latter a double argument.
+  The correct order is to \texmacro{defineenigma} an enigma machine
+  first and then \texmacro{setupenigma} it.
+  The definition takes a single, setups a double mandatory argument.
   Thus, \type{\defineenigma{encrypt}} creates a new environment
-  consisting of the macros \texmacro{startencrypt} and
-  \texmacro{stopencrypt}.%
+  consisting of the macros \texmacro{beginencrypt} and
+  \texmacro{endencrypt}.%
   \footnote{%
-    \CONTEXT-users will have noticed that there is no simple macro
+    \CONTEXT-users will have noticed that there is no direct macro
     \type{\encrypt{foo}}. The reason for this is that the callback
     which the module relies on operates on node-level.
     This means that for the Enigma encryption to have an effect it will
@@ -104,8 +103,18 @@
     portions of text, please send a feature request to the maintainer
     (\ichdparameter{email}).
   }
-  However, these are not usable right away, as we still have to set the
-  initial state of the machine.
+  These correspond to \texmacro{startencrypt}/\texmacro{stopencrypt} in
+  the \CONTEXT\ interface.
+  The \CONTEXT-examples below are easily translated to
+  Plain/\LATEX-syntax by replacing curly brackets (groups) with
+  square brackets and substituting environment prefixes:
+    \type{\start<foo>} becomes \type{\begin<foo>} and
+    \type{\stop<foo>}  becomes \type{\end<foo>}.
+  Except for those conventions the syntax, even in key-value
+  assignments, is identical.
+
+  However, the environment is not usable right away, as we still have
+  to set the initial state of the machine.
   This is achieved by the second meta-macro,
   \type{\setupenigma{encrypt}{<args>}}, where \type{<args>} is a
   placeholder for a list of \emph{assignments}, i.\,e. pairs of
@@ -126,9 +135,16 @@
 At the moment, the \texmacro{setupenigma} macro in any format  accepts
 the following parameters.
 % \startpostponing[+2]%% messes up floats -- why?
-  \placefigure[right]{Usage example for the \PLAIN\ format.}{
+  \startplacefigure[
+      location={right,high},
+      title={Usage example for the \PLAIN\ format.},
+    ]
     % \framed[align=right,frameoffset=1em]{%
-    \framed[align=right,frameoffset=1em,frame=off]{%
+    \startframed[
+      align=right,
+      frameoffset=1em,
+      frame=off,
+    ]%
       \startlatextyping[before=,after=,]
       \input {enigma}
       %% Definition ··········· %%
@@ -143,19 +159,19 @@ the following parameters.
         verbose = 1,
       }
       %% Usage ················ %%
-      \startencryption
+      \beginencryption
         aaaaa aaaaa aaaaa
         aaaaa aaaaa aaaaa
-      \stopencryption
-      \startencryption
+      \endencryption
+      \beginencryption
         Nobody in Poland is going
         to be able to read this,
         har har!
-      \stopencryption
+      \endencryption
       \bye
       \stoplatextyping
-    }
-  }
+    \stopframed
+  \stopplacefigure
 % \stoppostponing
 \startitemize
   \setuptolerance[tolerant]%% it’s crowded in here due to the float
@@ -236,21 +252,11 @@ key but supposed to be chosen at random by the operating signal
 officer.
 
 The output can be automatically grouped into sequences of five
-characters, delimited by spaces. This does not only conform with
-traditional crypto-style, but also allows for the resulting text to be
-sanely broken into lines by \TEX.
+characters, delimited by spaces (option \identifier{spacing}). This
+does not only conform with traditional crypto-style, but also allows
+for the resulting text to be sanely broken into lines by \TEX.
 
 %%% other_chars
-% The option \identifier{other_chars} determines how the machine -- in
-% our Unicode-aware times -- should behave when it encounters a
-% non-Latin letter. For the time being it can either remove them from
-% the input (value \emph{no}) or pass them through unmodified
-% (\emph{yes}). Note that this is independent of the
-% \emph{preprocessing} of characters like punctuation and umlauts,
-% which is done automatically.
-% (See below \at{page}[listing:preproc] for the internal substitution
-% list.)
-
 Most documents don’t naturally adhere to the machine-imposed
 restriction to the 26 letters of the Latin alphabet. The original
 encipherment directives comprised substitution tables to compensate for
@@ -375,9 +381,9 @@ document as follows:
 }
 \begin{document}
 
-\startdecryption
+\begindecryption
 usbatbwcaajhzgeyzkqskupzbmdhbdepccgeh
-\stopdecryption
+\enddecryption
 
 \end{document}
 \stoplatextyping

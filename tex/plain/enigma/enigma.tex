@@ -76,14 +76,17 @@
 
 %D \startdocsection[title=Encoding Macros]
 %D \startparagraph
-%D The environment of \texmacro{start<enigmaid>} and
-%D \texmacro{stop<enigmaid>} allow enabling of Enigma encoding in
-%D different parts of the document.
+%D The environment of \texmacro{begin<enigmaid>} and
+%D \texmacro{end<enigmaid>} toggles Enigma encoding.
+%D (Regarding environment delimiters we adhere to Knuth’s
+%D practice of prefixing with \type{begin}/\type{end}.)
 %D \stopparagraph
 
+\def\e!start{begin} %{start}
+\def \e!stop{end}   %{stop}
 \edef\c!pre_linebreak_filter{pre_linebreak_filter}
 \def\do_define_enigma#1{%
-  \@EA\gdef\csname start\current_enigma_id\endcsname{%
+  \@EA\gdef\csname \e!start\current_enigma_id\endcsname{%
     \endgraf
     \bgroup%
     \directlua{%
@@ -99,7 +102,7 @@
       end
     }%
   }%
-  \@EA\gdef\csname stop\current_enigma_id\endcsname{%
+  \@EA\gdef\csname \e!stop\current_enigma_id\endcsname{%
     \endgraf
     \directlua{
       luatexbase.remove_from_callback(
@@ -124,4 +127,4 @@
 \catcode`\_=8  % \popcatcodes
 \catcode`\!=12 % reserved according to source2e
 \ifenigmaisrunningplain\catcode`\@=12\fi
-% vim:ft=tex:sw=2:ts=2:expandtab:tw=71
+% vim:ft=plaintex:sw=2:ts=2:expandtab:tw=71
