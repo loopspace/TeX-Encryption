@@ -68,6 +68,7 @@ libraries.
 \stopparagraph
 --ichd]]--
 
+local get_debug_info               = debug.getinfo
 local ioread                       = io.read
 local iowrite                      = io.write
 local mathfloor                    = math.floor
@@ -1556,9 +1557,15 @@ local new_callback = function (machine, name)
     mod_5              = 0
     if format_is_context == true then
       head = c
-    else
-      head = a
+      local cbk_env = get_debug_info(4) -- no getenv in lua 5.2
+      --inspect(cbk_env)
+      if cbk_env.func == nodes.processors.pre_linebreak_filter then
+        -- how weird is that?
+        return aux(head)
+      end
+      return head
     end
+    head = a
     return aux(head)
   end
 
