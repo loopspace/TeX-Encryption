@@ -749,10 +749,9 @@ whenever something goes wrong.
 \startparagraph
 Before an input character is passed on to the actual encoding routing,
 the function \luafunction{encode_char} matches it agains the latin
-alphabet. Characters that fail this check are, at the moment, returned
-as they were.
-\TODO{Make behaviour of \luafunction{encode_char} in case of invalid
-input configurable.}
+alphabet.
+Characters failing this test are either passed through or ignored,
+depending on the machine option \identifier{other_chars}.
 Also, the counter of encoded characters is incremented at this stage
 and some pretty printer hooks reside here.
 \stopparagraph
@@ -766,7 +765,6 @@ For debugging purposes, the first substitution is stored in a separate
 local variable, \identifier{pb_char}.
 \stopparagraph
 --ichd]]--
-  local valid_char_p = letter_to_value
 
   local encode_char = function (machine, char)
     machine.step = machine.step + 1
@@ -1074,8 +1072,14 @@ character, each one will be encoded successively, yielding a list.
   local encode_general = function (machine, chr)
     local chr = stringlower(chr)
     local replacement
-        = pp_substitutions[chr] or valid_char_p[chr] and chr
-    if not replacement then return false end
+        = pp_substitutions[chr] or letter_to_value[chr] and chr
+    if not replacement then
+      if machine.other_chars then
+        return chr
+      else
+        return false
+      end
+    end
 
     if utf8len(replacement) == 1 then
       return encode_char(machine, replacement)
@@ -1501,11 +1505,7 @@ local new_callback = function (machine, name)
         local treplacement = replacement and type(replacement)
         --if replacement == false then
         if not replacement then
-          if machine.other_chars then
-            insert_encoded(head, n, nil)
-          else
-            noderemove(head, n)
-          end
+          noderemove(head, n)
         elseif treplacement == "string" then
           --print(head, n, replacement)
           head, _ = insert_encoded(head, n, replacement)
@@ -1552,7 +1552,14 @@ local new_callback = function (machine, name)
     return head
   end -- callback auxiliary
 
+  --- Context requires
+  ---  × argument shuffling; a properly registered “action” gets the
+  ---    head passed as its third argument
+  ---  × hacking our way around the coupling of pre_linebreak_filter
+  ---    and hpack_filter; background:
+  ---    http://www.ntg.nl/pipermail/ntg-context/2012/067779.html
   local cbk = function (a, _, c)
+    local head
     current_space_node = generate_space ()
     mod_5              = 0
     if format_is_context == true then
