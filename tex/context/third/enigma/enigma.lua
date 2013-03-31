@@ -130,6 +130,8 @@ local GLUE_NODE                    = node and nodeid"glue"
 local GLUE_SPEC_NODE               = node and nodeid"glue_spec"
 local KERN_NODE                    = node and nodeid"kern"
 local DISC_NODE                    = node and nodeid"disc"
+local HLIST_NODE                   = node and nodeid"hlist"
+local VLIST_NODE                   = node and nodeid"vlist"
 
 local IGNORE_NODES = node and {
 --[GLUE_NODE] = true,
@@ -1456,14 +1458,8 @@ local new_callback = function (machine, name)
 
   local format_is_context = format_is_context
   --- The callback proper starts here.
-  local cbk = function (a, _, c)
-    current_space_node = generate_space ()
-    if format_is_context == true then
-      head = c
-    else
-      head = a
-    end
-    mod_5 = 0
+  local aux aux = function (head, recurse)
+    if recurse then print ("recurse depth:", recurse) end
     for n in nodetraverse(head) do
       local nid = n.id
       --print(utf8char(n.char), n)
@@ -1492,7 +1488,7 @@ local new_callback = function (machine, name)
           noderemove(head, n)
         end
       elseif IGNORE_NODES[nid] then
-        -- spaces and kerns are dropped
+        -- drop spaces and kerns
         noderemove(head, n)
       elseif nid == DISC_NODE then
         --- ligatures need to be resolved if they are characters
@@ -1511,14 +1507,29 @@ local new_callback = function (machine, name)
           end
         end
         noderemove(head, n)
-      --else
-      -- TODO other node types
-      --  print(n)
+--      elseif nid == HLIST_NODE then
+--        print(nid, n)
+--        print"going down ... <<<<<<"
+--        -- descend
+--      else
+--        -- TODO other node types
+--        print(n)
       end
     end
     nodeslide(head)
     return head
-  end -- callback
+  end -- callback auxiliary
+
+  local cbk = function (a, _, c)
+    current_space_node = generate_space ()
+    mod_5              = 0
+    if format_is_context == true then
+      head = c
+    else
+      head = a
+    end
+    return aux(head)
+  end
 
   if format_is_context then
     local cbk_id = "enigma_" .. name
