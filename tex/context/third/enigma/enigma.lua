@@ -103,6 +103,7 @@ local type                         = type
 local utf8byte                     = unicode.utf8.byte
 local utf8char                     = unicode.utf8.char
 local utf8len                      = unicode.utf8.len
+local utf8lower                    = unicode.utf8.lower
 local utf8sub                      = unicode.utf8.sub
 local utfcharacters                = string.utfcharacters
 
@@ -808,24 +809,26 @@ local variable, \identifier{pb_char}.
 
 --[[ichd--
 \startparagraph
-As the actual encoding proceeds character-wise, the processing of
-entire strings needs to be managed externally. This is where
-\luafunction{encode_string} comes into play: It handles iteration and
-extraction of successive characters from the sequence.
-\TODO{Make \luafunction{encode_string} preprocess characters.}
+When \modulename{Enigma} is called from \TEX, the encoding
+proceeds character by character as we iterate one node at a time.
+\luafunction{encode_string} is a wrapper for use with strings, e.~g. in
+the mtx-script (\at{page}[sec:fun]).
+It handles iteration and extraction of successive characters from the
+sequence.
 \stopparagraph
 --ichd]]--
   local encode_string = function (machine, str) --, pattern)
     local result = { }
-    str = stringlower(str)
     for char in utfcharacters(str) do
       local tmp = machine:encode(char)
-      if type(tmp) == "table" then
-        for i=1, #tmp do
-          result[#result+1] = tmp[i]
+      if tmp ~= false then
+        if type(tmp) == "table" then
+          for i=1, #tmp do
+            result[#result+1] = tmp[i]
+          end
+        else
+          result[#result+1] = tmp
         end
-      else
-        result[#result+1] = tmp
       end
     end
     machine:processed_chars()
@@ -1070,7 +1073,7 @@ character, each one will be encoded successively, yielding a list.
 \stopparagraph
 --ichd]]--
   local encode_general = function (machine, chr)
-    local chr = stringlower(chr)
+    local chr = utf8lower(chr)
     local replacement
         = pp_substitutions[chr] or letter_to_value[chr] and chr
     if not replacement then
