@@ -4,7 +4,7 @@ title       = Enigma
 description = Historical encryption for \CONTEXT, Plain\TEX\ and \LATEX\ documents
 license     = 2-clause {\sc bsd}
 version     = hg tip
-date        = 2012-06-07 22:32:13+0200
+date        = 2013-03-31 20:55:46+0200
 email       = phg42.2a@gmail.com
 copyright   = 2010--\currentdate[year]
 [Manual]
