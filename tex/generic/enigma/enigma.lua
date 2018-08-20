@@ -1193,6 +1193,7 @@ or drop offending characters.
       state               = init_state,
       other_chars         = args.other_chars,
       spacing             = args.spacing,
+      keep_spacing        = args.keepSpacing,
       ---> a>1, b>2, c>3
       reflector           = letter_to_value[raw_settings.reflector],
       plugboard           = plugboard,
@@ -1335,6 +1336,7 @@ has a sanitizer routine and, if so, apply it to its value.
   local sanitizers = {
     other_chars   = toboolean,          -- true = keep, false = drop
     spacing       = toboolean,
+    keepSpacing   = toboolean,
     day_key       = alphanum_or_space,
     rotor_setting = ensure_alpha,
     verbose       = ensure_int,
@@ -1407,10 +1409,9 @@ callback in order to get an appropriate space glue.
 local generate_space = function ( )
   local current_fontparms = font.getfont(font.current()).parameters
   local space_node        = nodenew(GLUE_NODE)
-  space_node.spec         = nodenew(GLUE_SPEC_NODE)
-  space_node.spec.width   = current_fontparms.space
-  space_node.spec.shrink  = current_fontparms.space_shrink
-  space_node.spec.stretch = current_fontparms.space_stretch
+  space_node.width   = current_fontparms.space
+  space_node.shrink  = current_fontparms.space_shrink
+  space_node.stretch = current_fontparms.space_stretch
   return space_node
 end
 
@@ -1437,10 +1438,10 @@ local new_callback = function (machine, name)
   --- characters.  The rationale behind using differend functions to
   --- implement each method is that it should be faster than branching
   --- for each character.
-  local insert_encoded
+  local insert_encoded, replace_encoded
 
   if machine.spacing then -- auto-group output
-    insert_encoded = function (head, n, replacement)
+    replace_encoded = function (head, n, replacement)
       local insert_glyph = nodecopy(n)
       if replacement then -- inefficient but bulletproof
         insert_glyph.char = utf8byte(replacement)
@@ -1473,9 +1474,61 @@ local new_callback = function (machine, name)
       --- insertion becomes the new head
       return head, insert_glyph -- so we know where to insert
     end
+
+    insert_encoded = function (head, n, replacement)
+      local insert_glyph = nodecopy(n)
+      if replacement then -- inefficient but bulletproof
+        insert_glyph.char = utf8byte(replacement)
+        --print(utf8char(n.char), "=>", utf8char(insertion.char))
+      end
+      --- if we insert a space we need to return the
+      --- glyph node in order to track positions when
+      --- replacing multiple nodes at once (e.g. ligatures)
+      local insertion  = insert_glyph
+      mod_5 = mod_5 + 1
+      if mod_5 > 5 then
+        mod_5 = 1
+        insertion = nodecopy(current_space_node)
+        insertion.next, insert_glyph.prev = insert_glyph, insertion
+      end
+      if head == n then --> insert after head
+        local succ = head.next
+        if succ then
+          insert_glyph.next, succ.prev = succ, insert_glyph
+        end
+        head.next = insertion
+      else --> insert after n
+        local pred, succ = n, n.next
+        pred.next, insertion.prev = insertion, pred
+        if succ then
+          insert_glyph.next, succ.prev = succ, insert_glyph
+        end
+      end
+      --- insertion becomes the new head
+      --head = insertion
+      return head, insert_glyph -- so we know where to insert
+    end
   else
 
     insert_encoded = function (head, n, replacement)
+      local insertion = nodecopy(n)
+      if replacement then
+        insertion.char = utf8byte(replacement)
+      end
+      if head == n then
+        local succ = head.next
+        if succ then
+          insertion.next, succ.prev = succ, insertion
+        end
+        head = insertion
+      else
+        nodeinsert_after(head, n, insertion)
+--        noderemove(head, n)
+      end
+      return head, insertion
+    end
+
+    replace_encoded = function (head, n, replacement)
       local insertion = nodecopy(n)
       if replacement then
         insertion.char = utf8byte(replacement)
@@ -1501,6 +1554,7 @@ local new_callback = function (machine, name)
       local nid = n.id
       --print(utf8char(n.char), n)
       if nid == GLYPH_NODE then
+        if ((n.subtype - (n.subtype%2))/2)%2 == 0 then
         local chr         = utf8char(n.char)
         --print(chr, n)
         local replacement  = machine:encode(chr)
@@ -1511,15 +1565,41 @@ local new_callback = function (machine, name)
           noderemove(head, n)
         elseif treplacement == "string" then
           --print(head, n, replacement)
-          head, _ = insert_encoded(head, n, replacement)
+          head, _ = replace_encoded(head, n, replacement)
         elseif treplacement == "table" then
           local current = n
           for i=1, #replacement do
-            head, current = insert_encoded(head, current, replacement[i])
+            head, current = replace_encoded(head, current, replacement[i])
+          end
+        end
+        else
+local chrs = {}
+local nc = n.components
+local re = replace_encoded
+while nc do
+  table.insert(chrs,utf8char(nc.char))
+  nc = nc.next
+end
+local rps = {}
+for k,v in ipairs(chrs) do
+  local replacement = machine:encode(v)
+  local treplacement = replacement and type(replacement)
+  if treplacement == "table" then
+    for l,u in ipairs(replacement) do
+      table.insert(rps,u)
+    end
+  elseif treplacement == "string" then
+    table.insert(rps,replacement)
+  end
+end
+          local current = n
+          for i=1, #rps do
+            head, current = re(head, current, rps[i])
+            re = insert_encoded
           end
         end
       elseif nid == GLUE_NODE then
-        if n.subtype ~= 15 then -- keeping the parfillskip
+        if n.subtype ~= 15 and not machine.keep_spacing then -- keeping the parfillskip
           noderemove(head, n)
         end
       elseif IGNORE_NODES[nid] then
@@ -1527,14 +1607,15 @@ local new_callback = function (machine, name)
         noderemove(head, n)
       elseif nid == DISC_NODE then
         --- ligatures need to be resolved if they are characters
+--- This code no longer handles ligatures, they are glyph nodes
         local npre, npost = n.pre, n.post
         if nodeid(npre)  == GLYPH_NODE and
            nodeid(npost) == GLYPH_NODE then
           if npre.char and npost.char then -- ligature between glyphs
             local replacement_pre  = machine:encode(utf8char(npre.char))
             local replacement_post = machine:encode(utf8char(npost.char))
-            insert_encoded(head,  npre, replacement_pre)
-            insert_encoded(head, npost, replacement_post)
+            replace_encoded(head,  npre, replacement_pre)
+            replace_encoded(head, npost, replacement_post)
           else -- hlists or whatever
             -- pass
             --noderemove(head, npre)
