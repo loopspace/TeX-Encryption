@@ -96,6 +96,7 @@ local stringfind                   = string.find
 local stringformat                 = string.format
 local stringlower                  = string.lower
 local stringsub                    = string.sub
+local stringlen                    = string.len
 local stringupper                  = string.upper
 local tableconcat                  = table.concat
 local tonumber                     = tonumber
@@ -749,7 +750,7 @@ whenever something goes wrong.
 --[[ichd--
 \startparagraph
 Before an input character is passed on to the actual encoding routing,
-the function \luafunction{encode_char} matches it agains the latin
+the function \luafunction{encode_enigma_char} matches it agains the latin
 alphabet.
 Characters failing this test are either passed through or ignored,
 depending on the machine option \identifier{other_chars}.
@@ -758,7 +759,7 @@ and some pretty printer hooks reside here.
 \stopparagraph
 
 \startparagraph
-\luafunction{encode_char} contributes only one element of the encoding
+\luafunction{encode_enigma_char} contributes only one element of the encoding
 procedure: the plugboard (\emph{Steckerbrett}).
 Like the rotors described above, a character passed through this
 device twice; the plugboard marks the beginning and end of every step.
@@ -767,7 +768,7 @@ local variable, \identifier{pb_char}.
 \stopparagraph
 --ichd]]--
 
-  local encode_char = function (machine, char)
+  local encode_enigma_char = function (machine, char)
     machine.step = machine.step + 1
     machine:rotate()
     local pb = machine.plugboard
@@ -805,6 +806,39 @@ local variable, \identifier{pb_char}.
     for i=1, 3 do
       rotors[i].state = state[i] - 1
     end
+  end
+
+  local do_encode_substitution_char = function(machine, char, tbl)
+    char = letter_to_value[char]
+    char = tbl[char]           -- do substitution
+    char = value_to_letter[char]
+    return char
+  end
+
+  local encode_substitution_char = function(machine, char)
+    return do_encode_substitution_char(machine, char, machine.forward)
+  end
+
+  local decode_substitution_char = function(machine, char)
+    return do_encode_substitution_char(machine, char, machine.backward)
+  end
+
+  local do_encode_viginere_char = function(machine, char, dir)
+    local l = #machine.key
+    machine.state = machine.state%l + 1
+    char = letter_to_value[char]
+    char = (char + dir*machine.key[machine.state] - 1)%26 + 1  -- do shift
+    char = value_to_letter[char]
+    return char
+    
+  end
+
+  local encode_viginere_char = function(machine, char)
+    return do_encode_viginere_char(machine, char, 1)
+  end
+
+  local decode_viginere_char = function(machine, char)
+    return do_encode_viginere_char(machine, char, -1)
   end
 
 --[[ichd--
@@ -1055,7 +1089,7 @@ consists of three elements:
     return r, s
   end
 
-  local decode_char = encode_char -- hooray for involutory ciphers
+  local decode_enigma_char = encode_enigma_char -- hooray for involutory ciphers
 
 --[[ichd--
 \startparagraph
@@ -1083,13 +1117,18 @@ character, each one will be encoded successively, yielding a list.
         return false
       end
     end
-
+    local dochr
+    if machine.direction then
+       dochr = function(c) return machine:encode_char(c) end
+    else
+       dochr = function(c) return machine:decode_char(c) end
+    end
     if utf8len(replacement) == 1 then
-      return encode_char(machine, replacement)
+      return dochr(replacement)
     end
     local result = { }
     for new_chr in utfcharacters(replacement) do
-      result[#result+1] = encode_char(machine, new_chr)
+      result[#result+1] = dochr(new_chr)
     end
     return result
   end
@@ -1123,6 +1162,55 @@ character, each one will be encoded successively, yielding a list.
 
   local processed_chars = function (machine)
     emit(1, pprint_machine_step, machine.step, machine.name)
+  end
+
+  local make_substitution_table = function(key)
+    local t = {}
+    if not key then
+      for k=1,26 do
+        table.insert(t,k)
+      end
+    else
+      key = stringlower(key)
+      for k=1,stringlen(key) do
+	 table.insert(t,letter_to_value[stringsub(key,k,k)])
+      end
+      if #t < 26 then
+        for k=#t+1,26 do
+          table.insert(t,k)
+        end
+      end
+    end
+    local r = {}
+    for k,v in ipairs(t) do
+       r[v] = k
+    end
+    return t,r
+  end
+
+  local make_affine_table = function(m,c)
+    local t = {}
+    for k=1,26 do
+       table.insert(t,(m*(k-1) + c)%26 + 1)
+    end
+    local r = {}
+    for k,v in ipairs(t) do
+       r[v] = k
+    end
+    return t,r
+  end
+  
+  local make_caesar_table = function(shift)
+     return make_affine_table(1,shift)
+  end
+
+  local make_viginere_table = function(key)
+     local t = {}
+     key = stringlower(key)
+     for k=1,stringlen(key) do
+	table.insert(t,letter_to_value[stringsub(key,k,k)])
+     end
+     return t
   end
 
 --[[ichd--
@@ -1172,7 +1260,7 @@ or drop offending characters.
 \stopparagraph
 --ichd]]--
 
-  new = function (name, args)
+  local new_enigma = function (name, args)
     local setup_string, pattern = args.day_key, args.rotor_setting
     local raw_settings = handle_day_key(setup_string, name)
     local rotors, ring =
@@ -1201,10 +1289,11 @@ or drop offending characters.
       rotate              = rotate,
       --process_message_key = process_message_key,
       encode_string       = encode_string,
-      encode_char         = encode_char,
+      encode_char         = encode_enigma_char,
       encode              = encode_general,
       decode_string       = decode_string,
-      decode_char         = decode_char,
+      decode_char         = decode_enigma_char,
+      direction           = not args.direction,
       set_state           = set_state,
       processed_chars     = processed_chars,
       --- <badcodingstyle> -- hackish but occasionally useful
@@ -1220,6 +1309,119 @@ or drop offending characters.
     emit(1, pprint_new_machine, machine)
     return machine
   end
+
+  local new_substitution = function(name, args)
+    local forward,backward = make_substitution_table(args.key)
+    local machine = {
+      name                = name,
+      other_chars         = args.other_chars,
+      spacing             = args.spacing,
+      keep_spacing        = args.keepSpacing,
+      ---> a>1, b>2, c>3
+      forward             = forward,
+      backward            = backward,
+      direction           = not args.decryption,
+      encode_string       = encode_string,
+      encode_char         = encode_substitution_char,
+      encode              = encode_general,
+      decode_string       = decode_string,
+      decode_char         = decode_substitution_char,
+      processed_chars     = processed_chars,
+      --- <badcodingstyle> -- hackish but occasionally useful
+      __raw               = raw_settings
+      --- </badcodingstyle>
+    } --- machine
+    return machine
+  end
+
+  local new_caesar = function(name, args)
+    local forward,backward = make_caesar_table(args.key)
+    local machine = {
+      name                = name,
+      other_chars         = args.other_chars,
+      spacing             = args.spacing,
+      keep_spacing        = args.keepSpacing,
+      ---> a>1, b>2, c>3
+      forward             = forward,
+      backward            = backward,
+      direction           = not args.decryption,
+      encode_string       = encode_string,
+      encode_char         = encode_substitution_char,
+      encode              = encode_general,
+      decode_string       = decode_string,
+      decode_char         = decode_substitution_char,
+      processed_chars     = processed_chars,
+      --- <badcodingstyle> -- hackish but occasionally useful
+      __raw               = raw_settings
+      --- </badcodingstyle>
+    } --- machine
+    return machine
+  end
+
+  local new_affine = function(name, args)
+     local _,_,m,c = stringfind(args.key,"(%d+)%s+(%d+)")
+    local forward,backward = make_affine_table(m,c)
+    local machine = {
+      name                = name,
+      other_chars         = args.other_chars,
+      spacing             = args.spacing,
+      keep_spacing        = args.keepSpacing,
+      ---> a>1, b>2, c>3
+      forward             = forward,
+      backward            = backward,
+      direction           = not args.decryption,
+      encode_string       = encode_string,
+      encode_char         = encode_substitution_char,
+      encode              = encode_general,
+      decode_string       = decode_string,
+      decode_char         = decode_substitution_char,
+      processed_chars     = processed_chars,
+      --- <badcodingstyle> -- hackish but occasionally useful
+      __raw               = raw_settings
+      --- </badcodingstyle>
+    } --- machine
+    return machine
+  end
+
+  local new_viginere = function(name, args)
+     local key = make_viginere_table(args.key)
+    local machine = {
+      name                = name,
+      other_chars         = args.other_chars,
+      spacing             = args.spacing,
+      keep_spacing        = args.keepSpacing,
+      ---> a>1, b>2, c>3
+      key                 = key,
+      state               = 0,
+      direction           = not args.decryption,
+      encode_string       = encode_string,
+      encode_char         = encode_viginere_char,
+      encode              = encode_general,
+      decode_string       = decode_string,
+      decode_char         = decode_viginere_char,
+      processed_chars     = processed_chars,
+      --- <badcodingstyle> -- hackish but occasionally useful
+      __raw               = raw_settings
+      --- </badcodingstyle>
+    } --- machine
+    return machine
+  end
+
+    new = function (name, args)
+      if not args.type or args.type == "enigma" then
+        return new_enigma(name, args)
+      elseif args.type == "substitution" then
+        return new_substitution(name, args)
+      elseif args.type == "caesar" then
+        return new_caesar(name, args)
+      elseif args.type == "affine" then
+        return new_affine(name, args)
+      elseif args.type == "viginere" then
+        return new_viginere(name, args)
+      else
+        return new_enigma(name, args)
+      end
+    end
 
 end
 --[[ichd--
@@ -1337,6 +1539,9 @@ has a sanitizer routine and, if so, apply it to its value.
     other_chars   = toboolean,          -- true = keep, false = drop
     spacing       = toboolean,
     keepSpacing   = toboolean,
+    decryption    = toboolean,
+    type          = ensure_alpha,
+    key           = ensure_alpha,
     day_key       = alphanum_or_space,
     rotor_setting = ensure_alpha,
     verbose       = ensure_int,

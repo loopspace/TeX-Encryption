@@ -72,6 +72,27 @@
     \luatexcatcodetable \enigmasetupcatcodes
     \do_setup_enigma%
 }
+
+\def\do_clone_enigma#1{%
+    \directlua{
+      local enigma = packagedata.enigma
+      local current_args = enigma.retrieve_raw_args(\!!bs\parent_enigma_id\!!es)
+      enigma.save_raw_args(current_args, \!!bs\current_enigma_id\!!es)
+      enigma.new_callback(
+        enigma.new_machine(\!!bs\current_enigma_id\!!es),
+        \!!bs\current_enigma_id\!!es)
+    }%
+  \egroup%
+}
+
+\def\inheritenigma#1#2{%
+  \defineenigma{#2}%
+  \bgroup
+    \edef\current_enigma_id{#2}
+    \edef\parent_enigma_id{#1}
+    \luatexcatcodetable \enigmasetupcatcodes
+    \do_clone_enigma%
+}
 %D \stopdocsection
 
 %D \startdocsection[title=Encoding Macros]
@@ -82,7 +103,7 @@
 %D practice of prefixing with \type{begin}/\type{end}.)
 %D \stopparagraph
 
-\def\e!start{begin} %{start}
+\def\e!start{} %{start}
 \def \e!stop{end}   %{stop}
 \edef\c!pre_linebreak_filter{pre_linebreak_filter}
 \def\do_define_enigma#1{%
